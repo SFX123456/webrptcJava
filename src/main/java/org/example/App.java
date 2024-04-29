@@ -8,7 +8,10 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Stack;
+import java.util.UUID;
+import org.json.JSONObject;
 
 
 /**
@@ -18,19 +21,35 @@ import java.util.Stack;
 public class App 
 {
     public static void main( String[] args ) throws IOException {
+        HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>();
+        for (int i = 0; i < RTCSdpType.values().length; i++) {
+           RTCSdpType x = RTCSdpType.values()[i]; 
+           stringRTCSdpTypeHashMap.put(x.name(),x);
+        }
         RTCConfiguration f = new RTCConfiguration();
         RTCIceServer rtcIceServer = new RTCIceServer();
         rtcIceServer.urls.add("stun:stun.stunprotocol.org:3478");
         rtcIceServer.urls.add("stun:stun.l.google.com:19302");
-        ArrayList<RTCIceCandidate> candidates = new ArrayList<>();
+        ArrayList<String> candidates = new ArrayList<>();
+        UUID clientAUUID = UUID.randomUUID();
+        UUID clientBUUID = UUID.randomUUID();
+        System.out.println(clientAUUID);
+        System.out.println(clientBUUID);
         // Step 4: Create a PeerConnection
-        
+       
         RTCPeerConnection connection = new PeerConnectionFactory().createPeerConnection(f, new PeerConnectionObserver() {
             @Override
             public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
                 System.out.println("got new ice candidate");
                 if (rtcIceCandidate == null) return;
-                candidates.add(rtcIceCandidate);
+                JSONObject candidateJson = new JSONObject();
+                candidateJson.put("candidate", rtcIceCandidate.sdp);
+                candidateJson.put("sdpMid", rtcIceCandidate.sdpMid);
+                candidateJson.put("sdpMLineIndex", rtcIceCandidate.sdpMLineIndex);
+
+                String candidateString = candidateJson.toString();
+                System.out.println(candidateString);
+                candidates.add(candidateString);
             }
             
             @Override
@@ -92,7 +111,7 @@ public class App
         });
 
 
-        final RTCSessionDescription[] rtcSessionDescription2 = {null};
+        final String[] rtcSessionDescription2 = {null};
         
         connection.createOffer(rtcOfferOptions, new CreateSessionDescriptionObserver() {
             @Override
@@ -102,8 +121,13 @@ public class App
                     @Override
                     public void onSuccess() {
                         System.out.println("set suc");
-                        rtcSessionDescription2[0] = rtcSessionDescription;
                         
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("sdp", rtcSessionDescription.sdp);
+                        jsonObject.put("type", rtcSessionDescription.sdpType.name());
+                        System.out.println("search");
+                        System.out.println(jsonObject);
+                        rtcSessionDescription2[0] = jsonObject.toString();
                     }
 
                     @Override
@@ -192,11 +216,26 @@ public class App
        
         
         candidates.forEach(p -> {
+            System.out.println("nnnnnnnnnnnnnnnnnnnnnnn");
+            System.out.println(p);
+            JSONObject candidateJson = new JSONObject(p);
+            int sdpMLineIndex = candidateJson.getInt("sdpMLineIndex");
+            String candidate = candidateJson.getString("candidate");
+            System.out.println("can" + candidate);
+            String sdpMid = candidateJson.getString("sdpMid");
+            System.out.println(sdpMid);
+            System.out.println(sdpMLineIndex);
+            RTCIceCandidate rtcIceCandidate = new RTCIceCandidate( sdpMid, sdpMLineIndex, candidate);
 
-            connectiona.addIceCandidate(p);
+            connectiona.addIceCandidate(rtcIceCandidate);
         });
-        
-        connectiona.setRemoteDescription(rtcSessionDescription2[0], new SetSessionDescriptionObserver() {
+        System.out.println("search2");
+        System.out.println(rtcSessionDescription2[0]);
+        JSONObject jsonObject = new JSONObject(rtcSessionDescription2[0]);
+        String sdp = jsonObject.getString("sdp");
+        String sdptype = jsonObject.getString("type");
+        RTCSessionDescription rtcSessionDescription = new RTCSessionDescription(stringRTCSdpTypeHashMap.get(sdptype), sdp);
+        connectiona.setRemoteDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
             @Override
             public void onSuccess() {
                 System.out.println("client B set remote desc succ");
