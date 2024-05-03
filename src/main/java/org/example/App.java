@@ -1,17 +1,26 @@
 package org.example;
 
+import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamStreamer;
 import dev.onvoid.webrtc.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+
+import dev.onvoid.webrtc.media.MediaStream;
+import dev.onvoid.webrtc.media.MediaStreamTrack;
+import dev.onvoid.webrtc.media.video.VideoCapture;
+import dev.onvoid.webrtc.media.video.VideoTrack;
+import org.json.JSONObject;
+
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Stack;
 import java.util.UUID;
-import org.json.JSONObject;
 
 
 /**
@@ -22,10 +31,31 @@ public class App
 {
     public static void main( String[] args ) throws IOException {
         HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>();
+        
         for (int i = 0; i < RTCSdpType.values().length; i++) {
            RTCSdpType x = RTCSdpType.values()[i]; 
            stringRTCSdpTypeHashMap.put(x.name(),x);
         }
+
+        Webcam webcam = Webcam.getDefault();
+        webcam.open();
+        
+        WebcamStreamer webcamStreamer = new WebcamStreamer(8888,webcam,30,true);
+
+        // get image
+        BufferedImage image = webcam.getImage();
+        System.out.println("so far 1");
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(image, "jpeg", os);                          
+        InputStream is = new ByteArrayInputStream(os.toByteArray());
+        System.out.println(is.available());
+        System.out.println("so far 2");
+        BufferedImage image1 = ImageIO.read(is);
+        System.out.println("so far 3");
+        ImageIO.write(image1, "PNG", new File("test.png"));
+        // save image to PNG file
+      
+        
         RTCConfiguration f = new RTCConfiguration();
         RTCIceServer rtcIceServer = new RTCIceServer();
         rtcIceServer.urls.add("stun:stun.stunprotocol.org:3478");
@@ -70,10 +100,18 @@ public class App
                 System.out.println("firstclient 2");
             }
             
+            @Override
+            public void onAddStream(MediaStream stream)
+            {
+                System.out.println("client 1: add stream");
+            }
+            
         });
       
         RTCOfferOptions rtcOfferOptions = new RTCOfferOptions();
         RTCDataChannel rtcDataChannel = connection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
+       
+        
         rtcDataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
             public void onBufferedAmountChange(long l) {
@@ -152,6 +190,13 @@ public class App
             public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
                 System.out.println("client b got new ice candidate");
                 connection.addIceCandidate(rtcIceCandidate);
+            }
+
+
+            @Override
+            public void onAddStream(MediaStream stream)
+            {
+                System.out.println("client 2: add stream");
             }
 
             @Override
