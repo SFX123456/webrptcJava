@@ -5,10 +5,10 @@ import com.github.sarxos.webcam.WebcamStreamer;
 import dev.onvoid.webrtc.*;
 
 
+import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.MediaStream;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
-import dev.onvoid.webrtc.media.video.VideoCapture;
-import dev.onvoid.webrtc.media.video.VideoTrack;
+import dev.onvoid.webrtc.media.video.*;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -37,24 +38,23 @@ public class App
            stringRTCSdpTypeHashMap.put(x.name(),x);
         }
 
-        Webcam webcam = Webcam.getDefault();
-        webcam.open();
-        
-        WebcamStreamer webcamStreamer = new WebcamStreamer(8888,webcam,30,true);
 
-        // get image
-        BufferedImage image = webcam.getImage();
-        System.out.println("so far 1");
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(image, "jpeg", os);                          
-        InputStream is = new ByteArrayInputStream(os.toByteArray());
-        System.out.println(is.available());
-        System.out.println("so far 2");
-        BufferedImage image1 = ImageIO.read(is);
-        System.out.println("so far 3");
-        ImageIO.write(image1, "PNG", new File("test.png"));
-        // save image to PNG file
-      
+        List<VideoDevice> list = MediaDevices.getVideoCaptureDevices();
+        System.out.println("start deg");
+        System.out.println(list.size());
+        System.out.println(list.get(0));
+        VideoDevice camera = list.get(0);
+        VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
+        videoDeviceSource.setVideoCaptureDevice(camera);
+        VideoTrack videoTrack = new PeerConnectionFactory().createVideoTrack("hello", videoDeviceSource );
+        System.out.println(videoTrack.getState());
+        videoTrack.addSink(new VideoTrackSink() {
+            @Override
+            public void onVideoFrame(VideoFrame videoFrame) {
+                System.out.println("videosink");
+                VideoFrameBuffer videoFrameBuffer = videoFrame.buffer;
+            }
+        });
         
         RTCConfiguration f = new RTCConfiguration();
         RTCIceServer rtcIceServer = new RTCIceServer();
@@ -66,7 +66,7 @@ public class App
         System.out.println(clientAUUID);
         System.out.println(clientBUUID);
         // Step 4: Create a PeerConnection
-       
+        System.out.println(videoTrack.getState());
         RTCPeerConnection connection = new PeerConnectionFactory().createPeerConnection(f, new PeerConnectionObserver() {
             @Override
             public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
@@ -100,17 +100,28 @@ public class App
                 System.out.println("firstclient 2");
             }
             
-            @Override
+             @Override
             public void onAddStream(MediaStream stream)
             {
                 System.out.println("client 1: add stream");
+            }
+            @Override
+            public void onTrack(RTCRtpTransceiver transceiver)
+            {
+                System.out.println("client 1: on Track");
+            }
+            @Override 
+            public void onAddTrack(RTCRtpReceiver receiver, MediaStream[] mediaStreams)
+            {
+                System.out.println("client 1: add track");
             }
             
         });
       
         RTCOfferOptions rtcOfferOptions = new RTCOfferOptions();
         RTCDataChannel rtcDataChannel = connection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
-       
+      
+        connection.addTrack(videoTrack, new ArrayList<>());
         
         rtcDataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
@@ -148,7 +159,8 @@ public class App
             }
         });
 
-
+        
+        
         final String[] rtcSessionDescription2 = {null};
         
         connection.createOffer(rtcOfferOptions, new CreateSessionDescriptionObserver() {
@@ -198,7 +210,16 @@ public class App
             {
                 System.out.println("client 2: add stream");
             }
-
+            @Override
+            public void onTrack(RTCRtpTransceiver transceiver)
+            {
+                System.out.println("client 2: on Track");
+            }
+            @Override 
+            public void onAddTrack(RTCRtpReceiver receiver, MediaStream[] mediaStreams)
+            {
+                System.out.println("client 2: add track");
+            }
             @Override
             public void onDataChannel(RTCDataChannel dataChannel) {
                 System.out.println("client b got data channel");
