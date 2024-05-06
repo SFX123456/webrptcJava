@@ -8,6 +8,7 @@ import dev.onvoid.webrtc.*;
 import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.MediaStream;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
+import dev.onvoid.webrtc.media.audio.*;
 import dev.onvoid.webrtc.media.video.*;
 import org.json.JSONObject;
 
@@ -15,6 +16,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.lang.model.element.VariableElement;
+import javax.sound.sampled.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -28,7 +30,13 @@ import java.util.*;
  */
 public class App 
 {
-    public static void main( String[] args ) throws IOException {
+    public static SourceDataLine line = null;
+    public static void main( String[] args ) throws IOException, LineUnavailableException {
+        AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
+        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+        line = (SourceDataLine) AudioSystem.getLine(info);
+        line.open(format);
+        line.start();
         HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>();
         
         for (int i = 0; i < RTCSdpType.values().length; i++) {
@@ -38,6 +46,12 @@ public class App
 
 
         List<VideoDevice> list = MediaDevices.getVideoCaptureDevices();
+        
+        AudioOptions audioOptions = new AudioOptions();
+        AudioTrackSource audioTrackSource = new PeerConnectionFactory().createAudioSource(audioOptions);
+        AudioTrack audioTrack = new PeerConnectionFactory().createAudioTrack("audio",audioTrackSource);
+     
+        /*
         System.out.println("start deg");
         System.out.println(list.size());
         System.out.println(list.get(0));
@@ -46,7 +60,9 @@ public class App
         videoDeviceSource.setVideoCaptureDevice(camera);
         
         VideoTrack videoTrack = new PeerConnectionFactory().createVideoTrack("hello", videoDeviceSource );
-        System.out.println(videoTrack.getId());
+        
+         */
+        //System.out.println(videoTrack.getId());
      
         
         RTCConfiguration f = new RTCConfiguration();
@@ -59,7 +75,7 @@ public class App
         System.out.println(clientAUUID);
         System.out.println(clientBUUID);
         // Step 4: Create a PeerConnection
-        System.out.println(videoTrack.getState());
+        
         RTCPeerConnection connection = new PeerConnectionFactory().createPeerConnection(f, new PeerConnectionObserver() {
             @Override
             public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
@@ -115,13 +131,16 @@ public class App
         RTCDataChannel rtcDataChannel = connection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
         ArrayList<String> v = new ArrayList<>();
         v.add("videochannel");
-        connection.addTrack(videoTrack, v);
+       //connection.addTrack(videoTrack, v);
         
+        ArrayList<String> g = new ArrayList<>();
+        g.add("audio");
+        connection.addTrack(audioTrack,g);
         
         /*
         **
          */
-        RTCRtpTransceiver transceiver = connection.addTransceiver(videoTrack,new RTCRtpTransceiverInit());
+        RTCRtpTransceiver transceiver = connection.addTransceiver(audioTrack,new RTCRtpTransceiverInit());
         
         rtcDataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
@@ -238,9 +257,19 @@ public class App
                         }
                     });
                 }
-                
-                
-                //transceiver.
+                else {
+                    System.out.println("its an audiotrack");
+                    AudioTrack audioTrack1 = (AudioTrack) typ;
+                    audioTrack1.addSink(new AudioTrackSink() {
+                        @Override
+                        public void onData(byte[] bytes, int i, int i1, int i2, int i3) {
+                            System.out.println("got audio data");
+                            System.out.println(bytes.length);
+                            playAudio(bytes);
+                        }
+                    });
+
+                }
             }
             @Override 
             public void onAddTrack(RTCRtpReceiver receiver, MediaStream[] mediaStreams)
@@ -388,5 +417,18 @@ public class App
         String jsujdf = bf.readLine();
         System.out.println(jsujdf);
         
+    }
+
+    public static void playAudio(byte[] audioData) {
+    
+            // Get default audio output device
+            
+
+            // Write audio data to the output line
+            line.write(audioData, 0, audioData.length);
+
+            // Close the line when finished
+           
+       
     }
 }
