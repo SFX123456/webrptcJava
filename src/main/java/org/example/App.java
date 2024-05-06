@@ -1,7 +1,7 @@
 package org.example;
 
-import com.github.sarxos.webcam.Webcam;
-import com.github.sarxos.webcam.WebcamStreamer;
+
+
 import dev.onvoid.webrtc.*;
 
 
@@ -14,14 +14,12 @@ import org.json.JSONObject;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
+import javax.lang.model.element.VariableElement;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 
 /**
@@ -46,15 +44,10 @@ public class App
         VideoDevice camera = list.get(0);
         VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
         videoDeviceSource.setVideoCaptureDevice(camera);
+        
         VideoTrack videoTrack = new PeerConnectionFactory().createVideoTrack("hello", videoDeviceSource );
-        System.out.println(videoTrack.getState());
-        videoTrack.addSink(new VideoTrackSink() {
-            @Override
-            public void onVideoFrame(VideoFrame videoFrame) {
-                System.out.println("videosink");
-                VideoFrameBuffer videoFrameBuffer = videoFrame.buffer;
-            }
-        });
+        System.out.println(videoTrack.getId());
+     
         
         RTCConfiguration f = new RTCConfiguration();
         RTCIceServer rtcIceServer = new RTCIceServer();
@@ -120,8 +113,15 @@ public class App
       
         RTCOfferOptions rtcOfferOptions = new RTCOfferOptions();
         RTCDataChannel rtcDataChannel = connection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
-      
-        connection.addTrack(videoTrack, new ArrayList<>());
+        ArrayList<String> v = new ArrayList<>();
+        v.add("videochannel");
+        connection.addTrack(videoTrack, v);
+        
+        
+        /*
+        **
+         */
+        RTCRtpTransceiver transceiver = connection.addTransceiver(videoTrack,new RTCRtpTransceiverInit());
         
         rtcDataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
@@ -208,17 +208,46 @@ public class App
             @Override
             public void onAddStream(MediaStream stream)
             {
+                System.out.println("never gets called");
                 System.out.println("client 2: add stream");
+                VideoTrack[] x = stream.getVideoTracks();
+                System.out.println(x.length);
+                x[0].addSink(new VideoTrackSink() {
+                    @Override
+                    public void onVideoFrame(VideoFrame videoFrame) {
+                        System.out.println("got new frame");
+                        System.out.println(videoFrame.buffer.getHeight());
+                        System.out.println(videoFrame.buffer.getWidth());
+                    }
+                });
+                
             }
             @Override
             public void onTrack(RTCRtpTransceiver transceiver)
             {
                 System.out.println("client 2: on Track");
+                MediaStreamTrack typ =  transceiver.getReceiver().getTrack();
+                System.out.println(typ.getKind());
+                if (typ.getKind().equals(MediaStreamTrack.VIDEO_TRACK_KIND)) {
+                    System.out.println("is videotrackl");
+                    VideoTrack videoTrack1 = (VideoTrack) typ;
+                    videoTrack1.addSink(new VideoTrackSink() {
+                        @Override
+                        public void onVideoFrame(VideoFrame videoFrame) {
+                            System.out.println("new frame received");
+                        }
+                    });
+                }
+                
+                
+                //transceiver.
             }
             @Override 
             public void onAddTrack(RTCRtpReceiver receiver, MediaStream[] mediaStreams)
             {
-                System.out.println("client 2: add track");
+                System.out.println("client 2: onaddtrack");
+                System.out.println(mediaStreams.length);
+               
             }
             @Override
             public void onDataChannel(RTCDataChannel dataChannel) {
