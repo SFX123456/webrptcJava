@@ -31,9 +31,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
             System.out.println("got login success");
             createNewRoom("helloworld",5);
         }
-        else if (obj.getString("eventName").equals("__create")) {
-            System.out.println("etwas");
-        }
+       
         
     }
 
@@ -59,7 +57,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         EventData eventData = new EventData();
         eventData.setEventName("__create");
         HashMap hashMap = new HashMap<String, String>();
-        hashMap.put("room", "neuerroom");
+        hashMap.put("room", room);
         hashMap.put("userID",myId);
         hashMap.put("roomSize",5);
 

@@ -23,14 +23,12 @@ public class App
         int deviceType = 1;
         String websocketUrl = "ws://127.0.0.1:5000/ws/";
         URI uri = new URI(websocketUrl + id + "/" + deviceType);
-        Thread thread = new Thread(() -> {
-            WebSocketClient webSocketClient = new WebSocketClient(uri,id);
-            webSocketClient.connect();
-        });
-        thread.start(); 
+        WebSocketClient webSocketClient = new WebSocketClient(uri,id);
+        webSocketClient.connect();
+        
         System.out.println("connected2");
-        //String line =  new BufferedReader(new InputStreamReader(System.in)).readLine();
-       
+        String line =  new BufferedReader(new InputStreamReader(System.in)).readLine();
+        webSocketClient.joinRoom("helloworld");
         /*
         HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>();
         
