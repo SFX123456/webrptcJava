@@ -1,26 +1,15 @@
 package org.example;
 
-import com.github.sarxos.webcam.Webcam;
-import com.github.sarxos.webcam.WebcamStreamer;
-import dev.onvoid.webrtc.*;
 
 
-import dev.onvoid.webrtc.media.MediaStream;
-import dev.onvoid.webrtc.media.MediaStreamTrack;
-import dev.onvoid.webrtc.media.video.VideoCapture;
-import dev.onvoid.webrtc.media.video.VideoTrack;
-import org.json.JSONObject;
 
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageOutputStream;
-import java.awt.image.BufferedImage;
+
+
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.UUID;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+
 
 
 /**
@@ -29,7 +18,20 @@ import java.util.UUID;
  */
 public class App 
 {
-    public static void main( String[] args ) throws IOException {
+    public static void main( String[] args ) throws IOException, URISyntaxException {
+        int id = 5;
+        int deviceType = 1;
+        String websocketUrl = "ws://127.0.0.1:5000/ws/";
+        URI uri = new URI(websocketUrl + id + "/" + deviceType);
+        Thread thread = new Thread(() -> {
+            WebSocketClient webSocketClient = new WebSocketClient(uri,id);
+            webSocketClient.connect();
+        });
+        thread.start(); 
+        System.out.println("connected2");
+        //String line =  new BufferedReader(new InputStreamReader(System.in)).readLine();
+       
+        /*
         HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>();
         
         for (int i = 0; i < RTCSdpType.values().length; i++) {
@@ -337,6 +339,8 @@ public class App
         
         String jsujdf = bf.readLine();
         System.out.println(jsujdf);
+        
+         */
         
     }
 }
