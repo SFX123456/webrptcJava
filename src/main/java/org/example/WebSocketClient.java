@@ -1,38 +1,53 @@
 package org.example;
 
-import org.java_websocket.handshake.ServerHandshake;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
+
+import dev.onvoid.webrtc.RTCIceCandidate;
+import org.example.bean.RoomInfo;
+import org.example.bean.UserBean;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.handshake.ServerHandshake;
+
+
+import java.io.IOException;
+import java.lang.invoke.StringConcatFactory;
 import java.net.URI;
-import java.nio.channels.NonWritableChannelException;
-import java.util.HashMap;
+
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
-    public WebSocketClient(URI serverUri,int id) {
+    private WebRtcClient webRtcClient;
+    public WebSocketClient(URI serverUri,int id, WebRtcClient webRtcClientMessageSender) {
         
         super(serverUri);
         myId = String.valueOf(id);
+        webRtcClient = webRtcClientMessageSender;
     }
-    
-    private String myId;
+
+    private static Gson gson = new Gson();
+    public String myId;
     
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        System.out.println("connection opened");
+        
     }
 
     @Override
     public void onMessage(String s) {
         System.out.println("got message");
         System.out.println(s);
-        JSONObject obj = new JSONObject(s);
-        if (obj.getString("eventName").equals("__login_success")) {
-            System.out.println("got login success");
-            createNewRoom("helloworld",5);
+        try {
+            
+            handleMessage(s);
+        }catch (Exception e) {
+
         }
-       
-        
     }
 
     @Override
@@ -45,33 +60,81 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         System.out.println("onerror");
     }
     
-    private void sendEventData(EventData data) {
-        JSONObject object = new JSONObject();
-        object.put("eventName", data.getEventName());
-        object.put("data", data.getData());
-       System.out.println(object);
-        send(object.toString());
+    private void handleMessage(String message) throws IOException {
+        EventData data;
+        try {
+            data = gson.fromJson(message, EventData.class);
+        } catch (JsonSyntaxException e) {
+            System.out.println("json解析错误：" + message);
+            return;
+        }
+        switch (data.getEventName()) {
+            case "__login_success":
+                webRtcClient.OnConnectedToServer();
+                break;      
+            case "__icecandidate":
+                handleNewIceClient(message,data);
+                break;
+            case "__suc_joined":
+                handleJoinedRoom(message,data);
+                break;
+            case "__offer":
+                handleNewOffer(message,data);
+                break;
+
+            case "__new_joined":
+                handleNewPersonJoined(message,data);
+                break;
+            default:
+                System.out.println("got new method " + data.getEventName());
+                break;
+        }
+
     }
     
-    public void createNewRoom(String room,int roomSize) {
-        EventData eventData = new EventData();
-        eventData.setEventName("__create");
-        HashMap hashMap = new HashMap<String, String>();
-        hashMap.put("room", room);
-        hashMap.put("userID",myId);
-        hashMap.put("roomSize",5);
-
-        eventData.setData(hashMap);
-        sendEventData(eventData);
-    }
-    public void joinRoom(String room) {
-        EventData eventData = new EventData();
-        eventData.setEventName("__join");
-        HashMap hashMap = new HashMap<String, String>();
-        hashMap.put("room", room);
-        hashMap.put("userID",myId);
-        eventData.setData(hashMap);
+    private void handleNewPersonJoined(String message, EventData data)
+    {
+        System.out.println("handlenewpersonjoined");
+        Map map = data.getData();
+        String userId = (String) map.get("userID");
         
-        sendEventData(eventData); 
+        webRtcClient.OnSomeoneNewJoined(new UserBean(userId,"dfs"));
     }
+
+    private void handleJoinedRoom(String message, EventData data) {
+        System.out.println("handlejoinroom,");
+        Map map = data.getData();
+         int size = (int) Double.parseDouble(String.valueOf(map.get("roomSize")));
+        String connections = (String)map.get("connections");
+        String[] users = connections.split(",");
+        RoomInfo roomInfo = new RoomInfo();
+        roomInfo.setMaxSize(size);
+        CopyOnWriteArrayList<UserBean> userBeans = new CopyOnWriteArrayList<>();
+        if (!connections.equals("")) {
+            for (String user : users) {
+                userBeans.add(new UserBean(user,"sdf"));
+            }
+        }
+        roomInfo.setUserBeans(userBeans);
+        webRtcClient.OnConnectedToRoom(roomInfo);
+    }
+
+    private void handleNewOffer(String message, EventData data) {
+        System.out.println("got new offer");
+        Map map = data.getData();
+        String type = (String) map.get("type");
+        String sdp = (String) map.get("sdp");
+        String id = (String) map.get("userID"); 
+        webRtcClient.OnGotOffer(sdp,type, id);
+        
+    }
+
+    private void handleNewIceClient(String message, EventData data) {
+        Map hashMap = data.getData();
+        String sdpMid = (String) hashMap.get("sdpMid");
+        String sdp = (String) hashMap.get("sdp");
+        int sdpMLineIndex = (int) hashMap.get("sdpMLineIndex");
+        webRtcClient.OnNewForeignIceCandidate(new RTCIceCandidate(sdpMid,sdpMLineIndex,sdp));
+    }
+    
 }
