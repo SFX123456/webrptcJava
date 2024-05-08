@@ -1,6 +1,7 @@
 package org.example;
 
 import dev.onvoid.webrtc.RTCDataChannel;
+import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.RTCIceCandidate;
 import org.example.bean.EventData;
 import org.example.bean.RoomInfo;
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +33,7 @@ public class WebRtcController implements WebRtcClient {
     final public int MAXROOMSIZE = 5;
     final public String ROOMNAME = "helloworld";
     public HashMap<String,Boolean> userSentOffer = new HashMap<String, Boolean>();
+    private static Object object = new Object();
     public WebRtcController(int id) throws URISyntaxException, IOException {
         myId = id;
         webSocketClient = connectToWebSocketServer();
@@ -96,7 +100,7 @@ public class WebRtcController implements WebRtcClient {
 
     @Override
     public void OnHandledAccept(String userID) {
-       webRtcWrapper.setUpDataToTransport(false,true,userID); 
+       //webRtcWrapper.setUpDataToTransport(false,true,userID); 
     }
 
     @Override
@@ -134,7 +138,7 @@ public class WebRtcController implements WebRtcClient {
          CopyOnWriteArrayList<UserBean> users = CurrentRoom.getUserBeans();   
          users.forEach(userBean -> {
              System.out.println("broadcast new ice candidate message to " + userBean.getUserId());
-             messageSender.sendNewIceCandidateMessage(sdpMid,sdp,sdpMLineIndex,Integer.parseInt(userBean.getUserId()), String.valueOf(myId));
+             messageSender.sendNewIceCandidateMessage(sdpMid,sdp, String.valueOf(sdpMLineIndex),userBean.getUserId(), String.valueOf(myId));
          });
     }
 
@@ -150,7 +154,28 @@ public class WebRtcController implements WebRtcClient {
     @Override
     public void OnNewDataChannel(RTCDataChannel rtcDataChannel)
     {
-        webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel));
+        webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel,this));
+    }
+    
+    
+    @Override
+    public void OnNewBroadcastMessageRequested(String message)
+    {
+        ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
+        sendBuffer.put(message.getBytes(StandardCharsets.UTF_8));
+        System.out.println("broadcasting message" + webRtcDataChannelHandlers.size());
+        sendBuffer.flip();
+        webRtcDataChannelHandlers.forEach(handler -> {
+            try {
+                System.out.println("sending on one webrtc data handler " + message);
+                synchronized (object) {
+                    handler.rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer,false));
+                    System.out.println("sent");
+                }
+            } catch (Exception e) {
+                System.out.println("unable to send message");
+            }
+        });
     }
 
     

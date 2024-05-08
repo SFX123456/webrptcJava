@@ -3,15 +3,19 @@ package org.example;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.RTCDataChannelObserver;
+import dev.onvoid.webrtc.RTCDataChannelState;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class WebRtcDataChannelHandler {
-    private RTCDataChannel rtcDataChannel;
-    public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel)
+    public RTCDataChannel rtcDataChannel;
+    private WebRtcClient webRtcClient;
+    private boolean sendHelloMethod = false;
+    public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel, WebRtcClient webRtcClient)
     {
         this.rtcDataChannel = rtcDataChannel;
+        this.webRtcClient = webRtcClient;
        registerListener(); 
     }
     
@@ -20,20 +24,24 @@ public class WebRtcDataChannelHandler {
        rtcDataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
             public void onBufferedAmountChange(long l) {
-                System.out.println("lllllllllllllllllllllll");
+                System.out.println("Buffered Amount changed");
             }
 
             @Override
             public void onStateChange() {
-
-                System.out.println("lllllllllllllllllllllll");
+              
+                System.out.println("DataChannel state changed");
+                System.out.println(rtcDataChannel.getState());
+                if (!rtcDataChannel.getState().equals(RTCDataChannelState.OPEN))return;
+                if(sendHelloMethod) return;
+                sendHelloMethod = true;
+                webRtcClient.OnNewBroadcastMessageRequested("Hallo welt");
+                /*
                 ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
 
-// Put some data into the buffer. For example, a simple string.
                 String message = "Hello, WebRTC!";
                 sendBuffer.put(message.getBytes(StandardCharsets.UTF_8));
 
-// Prepare the buffer for reading or sending by flipping it
                 sendBuffer.flip();
                 System.out.println("Sending buffer");
                 System.out.println("Position: " + sendBuffer.position());
@@ -44,6 +52,8 @@ public class WebRtcDataChannelHandler {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+                
+                */
             }
 
            @Override

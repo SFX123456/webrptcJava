@@ -72,7 +72,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
             case "__login_success":
                 webRtcClient.OnConnectedToServer();
                 break;      
-            case "__icecandidate":
+            case "__ice_candidate":
                 handleNewIceClient(message,data);
                 break;
             case "__suc_joined":
@@ -142,10 +142,13 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     }
 
     private void handleNewIceClient(String message, EventData data) {
+        System.out.println("handle new ice client");
         Map hashMap = data.getData();
         String sdpMid = (String) hashMap.get("sdpMid");
         String sdp = (String) hashMap.get("sdp");
-        int sdpMLineIndex = (int) hashMap.get("sdpMLineIndex");
+        System.out.println("sdpMLineIndex");
+        int sdpMLineIndex = Integer.valueOf((String) hashMap.get("sdpMLineIndex"));
+        System.out.println(sdpMLineIndex);
         String sender = (String) hashMap.get("sender");
         webRtcClient.OnNewForeignIceCandidate(new RTCIceCandidate(sdpMid,sdpMLineIndex,sdp),sender);
     }

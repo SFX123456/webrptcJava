@@ -12,17 +12,20 @@ public class MessageSender {
         this.webSocketClient = webSocketClient;
     }
     
-    public void sendNewIceCandidateMessage(String sdpMid, String sdp, int sdpMLineIndex, int idMessageReceiver, String sender)
+    public void sendNewIceCandidateMessage(String sdpMid, String sdp, String sdpMLineIndex, String idMessageReceiver, String sender)
     {
+        System.out.println("send new ice candidare message");
         EventData eventData = new EventData();
         eventData.setEventName("__ice_candidate");
-        Map map = eventData.getData();
+        HashMap map = new HashMap<String,String>();
         map.put("sdpMid", sdpMid);
         map.put("sdp",sdp);
         map.put("sdpMLineIndex", sdpMLineIndex);
         map.put("userID",idMessageReceiver);
         map.put("sender",sender);
-        webSocketClient.send(eventData.toString());
+        eventData.setData(map);
+        System.out.println("sent new ice cnadidate message");
+        sendEventData(eventData);
     }
 
     public void joinRoom(String room) {

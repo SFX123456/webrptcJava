@@ -16,6 +16,9 @@ public interface WebRtcClient {
     public void OnConnectedToServer() throws IOException;
 
     public void OnGotOffer(String sdp, String type , String userID);
+
+    public void OnNewBroadcastMessageRequested(String message);
+    
     public void OnGotAnswer(String sdp, String type , String userID);
     public void OnHandledAccept(String userID);
     

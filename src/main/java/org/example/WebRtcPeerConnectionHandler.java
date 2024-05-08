@@ -19,7 +19,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     {
         this.webRtcClient = webRtcClient;
     }
-    
+    private boolean sendInitialMessage = false;
     @Override
     public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
         System.out.println("got new ice candidate");
@@ -79,6 +79,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     @Override
     public void onDataChannel(RTCDataChannel dataChannel) {
         System.out.println("client b got data channel");
+        System.out.println("never gets called");
         webRtcClient.OnNewDataChannel(dataChannel);
         
     }
@@ -100,6 +101,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     @Override
     public void onIceConnectionChange(RTCIceConnectionState state) {
         Logger.LogMessage("on ice connection change" + state);
+        
     }
     @Override
     public void onStandardizedIceConnectionChange(RTCIceConnectionState state) {

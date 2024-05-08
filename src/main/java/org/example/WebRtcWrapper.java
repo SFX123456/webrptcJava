@@ -120,12 +120,11 @@ public class WebRtcWrapper {
 
         System.out.println("setting up datachannel");
         RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
-        webRtcDataChannelHandler = new WebRtcDataChannelHandler(dataChannel);
-        System.out.println(rtcPeerConnection.getIceConnectionState());
-        System.out.println(rtcPeerConnection.getIceGatheringState());
-
-
+        webRtcClient.OnNewDataChannel(dataChannel); 
     } 
+    
+    
+    
     public void setUpDataToTransport(boolean video, boolean audio,String id)
     {
         if (webRtcClient.getID() != 5) return;
@@ -140,9 +139,7 @@ public class WebRtcWrapper {
         if (video) {
             System.out.println("reuqested video");
         }
-        System.out.println(rtcPeerConnection.getIceConnectionState());
-        System.out.println(rtcPeerConnection.getIceGatheringState());
-        
+   
        
     }
     
