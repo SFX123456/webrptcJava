@@ -12,7 +12,7 @@ public class MessageSender {
         this.webSocketClient = webSocketClient;
     }
     
-    public void sendNewIceCandidateMessage(String sdpMid, String sdp, int sdpMLineIndex, int idMessageReceiver)
+    public void sendNewIceCandidateMessage(String sdpMid, String sdp, int sdpMLineIndex, int idMessageReceiver, String sender)
     {
         EventData eventData = new EventData();
         eventData.setEventName("__ice_candidate");
@@ -21,6 +21,7 @@ public class MessageSender {
         map.put("sdp",sdp);
         map.put("sdpMLineIndex", sdpMLineIndex);
         map.put("userID",idMessageReceiver);
+        map.put("sender",sender);
         webSocketClient.send(eventData.toString());
     }
 
@@ -77,6 +78,7 @@ public class MessageSender {
         map.put("userID",i);
         map.put("sdp",sdp );
         map.put("type",type);
+        map.put("sendbackto", webSocketClient.myId);
         eventData.setData(map);
        sendEventData(eventData);
     }

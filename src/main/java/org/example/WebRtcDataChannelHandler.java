@@ -48,6 +48,7 @@ public class WebRtcDataChannelHandler {
 
            @Override
            public void onMessage(RTCDataChannelBuffer rtcDataChannelBuffer) {
+                System.out.println("onMessage new messafe received");
                ByteBuffer buffer = rtcDataChannelBuffer.data;
 
                System.out.println("New message received");

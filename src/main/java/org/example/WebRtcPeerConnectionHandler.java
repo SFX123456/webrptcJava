@@ -86,9 +86,10 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     @Override
     public void onSignalingChange(RTCSignalingState state)
     {
-        System.out.println("sdklfmsdfijmdsf");
+        System.out.println("Signaling changed");
         System.out.println(state);
         System.out.println(state.name());
+        
     }
 
     @Override
@@ -96,6 +97,26 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     {
         System.out.println("sdlfjnsufidn");
     }
+    @Override
+    public void onIceConnectionChange(RTCIceConnectionState state) {
+        Logger.LogMessage("on ice connection change" + state);
+    }
+    @Override
+    public void onStandardizedIceConnectionChange(RTCIceConnectionState state) {
+        Logger.LogMessage("onstandardizediceconnec" + state);
+    }
+    @Override
+    public void onIceConnectionReceivingChange(boolean receiving) {
+        Logger.LogMessage("iceconnectzionreceivincgha" + receiving);
+    }
 
+    @Override
+    public void onIceGatheringChange(RTCIceGatheringState state) {
+        Logger.LogMessage("icegatheringchnage" + state.name());
+    }
+
+    public void onIceCandidateError(RTCPeerConnectionIceErrorEvent event) {
+        Logger.LogError(event.getErrorText());
+    }
     
 }

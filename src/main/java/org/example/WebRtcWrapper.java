@@ -10,6 +10,7 @@ import dev.onvoid.webrtc.media.video.VideoDevice;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -47,7 +48,29 @@ public class WebRtcWrapper {
     }
     public void startOfferSending(String userID)
     {
+        System.out.println("sending offer");
         sendOffer(userID);
+    }
+    public void handleNewAccept(String sdp, String type, String id)
+    {
+        RTCSessionDescription rtcSessionDescription = new RTCSessionDescription(stringRTCSdpTypeHashMap.get(type), sdp);
+        System.out.println(rtcPeerConnection.getConnectionState());
+        rtcPeerConnection.setRemoteDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
+            
+            @Override
+            public void onSuccess() {
+                System.out.println("client A set Remote desc");
+                webRtcClient.OnHandledAccept(id);
+            }
+
+            @Override
+            public void onFailure(String s) {
+
+                System.out.println("could not set remote desc");
+                System.out.println(s);
+                System.out.println("sdp " + sdp);
+            }
+        });
     }
     
     private void sendOffer(String userId) {
@@ -59,16 +82,8 @@ public class WebRtcWrapper {
                 rtcPeerConnection.setLocalDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
                     @Override
                     public void onSuccess() {
-                        System.out.println("set suc");
+                        System.out.println("successfully set local desc");
                         webRtcClient.OnSuccessfullyCreatedOffer(rtcSessionDescription.sdp,rtcSessionDescription.sdpType.name(), userId );
-                        /*
-                        jsonObject.put("sdp", rtcSessionDescription.sdp);
-                        jsonObject.put("type", rtcSessionDescription.sdpType.name());
-                        System.out.println("search");
-                        System.out.println(jsonObject);
-                        
-                         */
-                        //rtcSessionDescription2[0] = jsonObject.toString();
                     }
 
                     @Override
@@ -85,25 +100,49 @@ public class WebRtcWrapper {
         });
     }
     public WebRtcWrapper(WebRtcClient webRtcClient) throws IOException {
-        this.webRtcClient = webRtcClient;
-        this.peerConnectionFactory = new PeerConnectionFactory();
-        this.rtcConfiguration = getRtcConfiguration();
-        this.rtcPeerConnection = getRtcPeerConnection();
-        this.ownAudio = getOwnAudio();
-        
         for (int i = 0; i < RTCSdpType.values().length; i++) {
             RTCSdpType x = RTCSdpType.values()[i];
             stringRTCSdpTypeHashMap.put(x.name(),x);
         }
+        this.webRtcClient = webRtcClient;
+        this.peerConnectionFactory = new PeerConnectionFactory();
+        this.rtcConfiguration = getRtcConfiguration();
+        this.rtcPeerConnection = getRtcPeerConnection();
+        setUpDataToTransport(false,true, String.valueOf(webRtcClient.getID()));
+        
+        
         System.out.println("WebRtcWrapper initiated");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String line = reader.readLine();
-        if (!line.equals("Y")) return;
-        System.out.println("adding track");
-        //rtcPeerConnection.addTrack(ownAudio.audioTrack, ownAudio.list);
+       
+    }
+    public void setUpDataChannel(String id)
+    {
+        if (webRtcClient.getID() != 5) return;
+
+        System.out.println("setting up datachannel");
         RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
         webRtcDataChannelHandler = new WebRtcDataChannelHandler(dataChannel);
-        rtcRtpTransceiver = rtcPeerConnection.addTransceiver(ownAudio.audioTrack, new RTCRtpTransceiverInit());
+        System.out.println(rtcPeerConnection.getIceConnectionState());
+        System.out.println(rtcPeerConnection.getIceGatheringState());
+
+
+    } 
+    public void setUpDataToTransport(boolean video, boolean audio,String id)
+    {
+        if (webRtcClient.getID() != 5) return;
+        setUpDataChannel(id);
+        if (audio) {
+            System.out.println("requested audio");
+            ownAudio = getOwnAudio();
+            rtcPeerConnection.addTrack(ownAudio.audioTrack, ownAudio.list);
+            rtcRtpTransceiver = rtcPeerConnection.addTransceiver(ownAudio.audioTrack, new RTCRtpTransceiverInit());
+            System.out.println("set audio track");
+        }
+        if (video) {
+            System.out.println("reuqested video");
+        }
+        System.out.println(rtcPeerConnection.getIceConnectionState());
+        System.out.println(rtcPeerConnection.getIceGatheringState());
+        
        
     }
     
@@ -114,54 +153,40 @@ public class WebRtcWrapper {
             @Override
             public void onSuccess() {
                 System.out.println("client B set remote desc succ");
-
-            }
-
-            @Override
-            public void onFailure(String s) {
-                System.out.println("client b not set remote desc succ");
-            }
-        });
-        rtcPeerConnection.createAnswer(new RTCAnswerOptions(), new CreateSessionDescriptionObserver() {
-            @Override
-            public void onSuccess(RTCSessionDescription rtcSessionDescription) {
-                System.out.println("anxwered");
-                
-                rtcPeerConnection.setLocalDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
+                rtcPeerConnection.createAnswer(new RTCAnswerOptions(), new CreateSessionDescriptionObserver() {
                     @Override
-                    public void onSuccess() {
-                        System.out.println("Client B set local desc");
-                        webRtcClient.OnSendAnswer(rtcSessionDescription.sdp,String.valueOf(rtcSessionDescription.sdpType),userID);
+                    public void onSuccess(RTCSessionDescription rtcSessionDescription) {
+                        System.out.println("anxwered");
+
+                        rtcPeerConnection.setLocalDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
+                            @Override
+                            public void onSuccess() {
+                                System.out.println("Client B set local desc");
+                                System.out.println("sending message back to " + userID);
+                                webRtcClient.OnSendAnswer(rtcSessionDescription.sdp, String.valueOf(rtcSessionDescription.sdpType), userID);
+                            }
+
+                            @Override
+                            public void onFailure(String s) {
+                                System.out.println("cliebt b not set local desc");
+                            }
+                        });
                     }
 
                     @Override
                     public void onFailure(String s) {
-                        System.out.println("cliebt b not set local desc");
+                        System.out.println("client b not set remote desc succ");
                     }
                 });
-
-/*
-                connection.setRemoteDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
-                    @Override
-                    public void onSuccess() {
-                        System.out.println("client A set Remote desc");
-                    }
-
-                    @Override
-                    public void onFailure(String s) {
-
-                        System.out.println("client A not set Remote desc");
-                    }
-                });
-*/
-
-
             }
 
             @Override
             public void onFailure(String s) {
-                System.out.println("unable to answer");
+                System.out.println("unable to set remote desc");
+                Logger.LogError(s);
             }
+
+
         });
 
 

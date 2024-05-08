@@ -8,13 +8,17 @@ import org.example.bean.UserBean;
 
 import java.io.IOException;
 
+
 public interface WebRtcClient {
-    public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate);
+    public int getID();
+    public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate, String sender);
 
     public void OnConnectedToServer() throws IOException;
 
     public void OnGotOffer(String sdp, String type , String userID);
-
+    public void OnGotAnswer(String sdp, String type , String userID);
+    public void OnHandledAccept(String userID);
+    
     public void OnNewAudio(byte[] audioData);
 
     public void OnSendAnswer(String sdp, String type, String id);

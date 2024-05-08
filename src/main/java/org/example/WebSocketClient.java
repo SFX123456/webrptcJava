@@ -82,6 +82,9 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
                 handleNewOffer(message,data);
                 break;
 
+            case "__answer":
+                handleNewAnswer(message,data);
+                break;
             case "__new_joined":
                 handleNewPersonJoined(message,data);
                 break;
@@ -91,7 +94,15 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         }
 
     }
-    
+
+    private void handleNewAnswer(String message, EventData data) {
+        Map map = data.getData();
+        String sdp = (String)map.get("sdp");
+        String type = (String)map.get("type");
+        String userID = (String)map.get("userID");
+        webRtcClient.OnGotAnswer(sdp,type,userID);
+    }
+
     private void handleNewPersonJoined(String message, EventData data)
     {
         System.out.println("handlenewpersonjoined");
@@ -125,7 +136,8 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         String type = (String) map.get("type");
         String sdp = (String) map.get("sdp");
         String id = (String) map.get("userID"); 
-        webRtcClient.OnGotOffer(sdp,type, id);
+        String sendbackto = (String) map.get("sendbackto");
+        webRtcClient.OnGotOffer(sdp,type, sendbackto);
         
     }
 
@@ -134,7 +146,8 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         String sdpMid = (String) hashMap.get("sdpMid");
         String sdp = (String) hashMap.get("sdp");
         int sdpMLineIndex = (int) hashMap.get("sdpMLineIndex");
-        webRtcClient.OnNewForeignIceCandidate(new RTCIceCandidate(sdpMid,sdpMLineIndex,sdp));
+        String sender = (String) hashMap.get("sender");
+        webRtcClient.OnNewForeignIceCandidate(new RTCIceCandidate(sdpMid,sdpMLineIndex,sdp),sender);
     }
     
 }

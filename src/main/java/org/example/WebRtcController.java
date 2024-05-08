@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -24,19 +25,15 @@ public class WebRtcController implements WebRtcClient {
     private boolean connected = false;
     private RoomInfo CurrentRoom = null;
     private WebRtcWrapper webRtcWrapper;
-
-    public ArrayList<WebRtcDataChannelHandler> webRtcDataChannelHandlers = new ArrayList<>();
     public int myId;
+    public ArrayList<WebRtcDataChannelHandler> webRtcDataChannelHandlers = new ArrayList<>();
     final public int MAXROOMSIZE = 5;
     final public String ROOMNAME = "helloworld";
-    public WebRtcController() throws URISyntaxException, IOException {
-        System.out.println("Type in your id");
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-        String line = bufferedReader.readLine();
-        myId = Integer.parseInt(line);
+    public HashMap<String,Boolean> userSentOffer = new HashMap<String, Boolean>();
+    public WebRtcController(int id) throws URISyntaxException, IOException {
+        myId = id;
         webSocketClient = connectToWebSocketServer();
         messageSender = new MessageSender(webSocketClient);
-       
         
         try {
             setUpAudio();
@@ -59,6 +56,7 @@ public class WebRtcController implements WebRtcClient {
    @Override
    public void OnSomeoneNewJoined(UserBean userBean)
    {
+       
        CurrentRoom.getUserBeans().add(userBean);
        webRtcWrapper.startOfferSending(userBean.getUserId());
    }
@@ -90,7 +88,17 @@ public class WebRtcController implements WebRtcClient {
         System.out.println("received offer");
         webRtcWrapper.handleNewReceivedOffer(sdp,type, userID);
     }
-    
+
+    @Override
+    public void OnGotAnswer(String sdp, String type, String userID) {
+        webRtcWrapper.handleNewAccept(sdp,type,userID);
+    }
+
+    @Override
+    public void OnHandledAccept(String userID) {
+       webRtcWrapper.setUpDataToTransport(false,true,userID); 
+    }
+
     @Override
     public void OnSendAnswer(String sdp, String type, String id)
     {
@@ -98,7 +106,12 @@ public class WebRtcController implements WebRtcClient {
     }
 
     @Override
-    public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate) {
+    public int getID() {
+        return myId;
+    }
+
+    @Override
+    public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate, String sender) {
        webRtcWrapper.handleNewIceCandidateForeign(rtcIceCandidate);
     }
     
@@ -121,7 +134,7 @@ public class WebRtcController implements WebRtcClient {
          CopyOnWriteArrayList<UserBean> users = CurrentRoom.getUserBeans();   
          users.forEach(userBean -> {
              System.out.println("broadcast new ice candidate message to " + userBean.getUserId());
-             messageSender.sendNewIceCandidateMessage(sdpMid,sdp,sdpMLineIndex,Integer.parseInt(userBean.getUserId()));
+             messageSender.sendNewIceCandidateMessage(sdpMid,sdp,sdpMLineIndex,Integer.parseInt(userBean.getUserId()), String.valueOf(myId));
          });
     }
 

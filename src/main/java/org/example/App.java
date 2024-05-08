@@ -18,15 +18,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 
-
-/**
- * Hello world!
- *
- */
 public class App 
 {
     public static void main( String[] args ) throws IOException, URISyntaxException {
-        new WebRtcController();
+        int myId = Integer.parseInt(args[0]);
+        new WebRtcController(myId);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         String line = bufferedReader.readLine();
         System.out.println(line);
