@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class MessageSender {
     public WebSocketClient webSocketClient;
+    public static Object object = new Object();
     public MessageSender(WebSocketClient webSocketClient)
     {
         this.webSocketClient = webSocketClient;
@@ -59,7 +60,9 @@ public class MessageSender {
         object.put("eventName", data.getEventName());
         object.put("data", data.getData());
         System.out.println(object);
-        webSocketClient.send(object.toString());
+        synchronized (object) {
+            webSocketClient.send(object.toString());
+        }
     }
     
     public void sendAnswer(String sdp, String type, String id)
@@ -70,6 +73,7 @@ public class MessageSender {
         hashMap.put("userID",id);
         hashMap.put("sdp",sdp);
         hashMap.put("type",type);
+        hashMap.put("sender",String.valueOf(webSocketClient.webRtcClient.getID()));
         eventData.setData(hashMap);
         sendEventData(eventData);
     }

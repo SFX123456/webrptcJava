@@ -19,7 +19,7 @@ public interface WebRtcClient {
 
     public void OnNewBroadcastMessageRequested(String message);
     
-    public void OnGotAnswer(String sdp, String type , String userID);
+    public void OnGotAnswer(String sdp, String type , String userID, String sender);
     public void OnHandledAccept(String userID);
     
     public void OnNewAudio(byte[] audioData);
@@ -30,7 +30,9 @@ public interface WebRtcClient {
 
     public void OnSuccessfullyCreatedOffer(String sdp, String type, String userID);
 
-    public void OnNewDataChannel(RTCDataChannel rtcDataChannel);
+    public void OnNewDataChannel(RTCDataChannel rtcDataChannel, String foreignID);
     public void OnConnectedToRoom(RoomInfo roomInfo);
     public void OnSomeoneNewJoined(UserBean userBean);
+    public void SentInitializeMessage(String foreignID);
+    public boolean DidSendInitializeMethod(String foreignID);
 }

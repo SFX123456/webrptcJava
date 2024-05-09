@@ -25,15 +25,13 @@ public class WebRtcController implements WebRtcClient {
     public static SourceDataLine line = null; 
     public MessageSender messageSender;
     public WebSocketClient webSocketClient;
-    private boolean connected = false;
     private RoomInfo CurrentRoom = null;
-    private WebRtcWrapper webRtcWrapper;
     public int myId;
     public ArrayList<WebRtcDataChannelHandler> webRtcDataChannelHandlers = new ArrayList<>();
     final public int MAXROOMSIZE = 5;
     final public String ROOMNAME = "helloworld";
-    public HashMap<String,Boolean> userSentOffer = new HashMap<String, Boolean>();
     private static Object object = new Object();
+    public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     public WebRtcController(int id) throws URISyntaxException, IOException {
         myId = id;
         webSocketClient = connectToWebSocketServer();
@@ -60,16 +58,31 @@ public class WebRtcController implements WebRtcClient {
    @Override
    public void OnSomeoneNewJoined(UserBean userBean)
    {
-       
        CurrentRoom.getUserBeans().add(userBean);
-       webRtcWrapper.startOfferSending(userBean.getUserId());
+       try {
+           WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userBean.getUserId());
+           UserIdToPeerConnection.put(userBean.getUserId(),webRtcWrapper1);
+           System.out.println("sending offer to " + userBean.getUserId());
+           webRtcWrapper1.startOfferSending(userBean.getUserId());
+       }
+       catch (Exception e) {
+            Logger.LogError(e.getMessage());
+       }
    }
-    
+
+    @Override
+    public void SentInitializeMessage(String foreignID) {
+        UserIdToPeerConnection.get(foreignID).sentInitializeMethod = true;
+    }
+
+    @Override
+    public boolean DidSendInitializeMethod(String foreignID) {
+        return UserIdToPeerConnection.get(foreignID).sentInitializeMethod;
+    }
+
     @Override
     public void OnConnectedToServer() throws IOException {
-        connected = true;
         System.out.println("Successfully connected to Websocketserver creating lobby");
-        webRtcWrapper = new WebRtcWrapper(this);
         if (myId == 5) {
             System.out.println("my id " + myId);
             messageSender.createNewRoom(ROOMNAME,MAXROOMSIZE);
@@ -89,13 +102,21 @@ public class WebRtcController implements WebRtcClient {
 
     @Override
     public void OnGotOffer(String sdp, String type, String userID ) {
-        System.out.println("received offer");
-        webRtcWrapper.handleNewReceivedOffer(sdp,type, userID);
+        System.out.println("received offer from " + userID);
+        try {
+            WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userID);
+            UserIdToPeerConnection.put(userID,webRtcWrapper1);
+            webRtcWrapper1.handleNewReceivedOffer(sdp,type, userID);
+        }
+        catch (Exception e) {
+            Logger.LogError(e.getMessage());
+        }
     }
 
     @Override
-    public void OnGotAnswer(String sdp, String type, String userID) {
-        webRtcWrapper.handleNewAccept(sdp,type,userID);
+    public void OnGotAnswer(String sdp, String type, String userID, String sender) {
+        System.out.println("got answer from " + sender);
+        UserIdToPeerConnection.get(sender).handleNewAccept(sdp,type,userID);
     }
 
     @Override
@@ -116,16 +137,19 @@ public class WebRtcController implements WebRtcClient {
 
     @Override
     public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate, String sender) {
-       webRtcWrapper.handleNewIceCandidateForeign(rtcIceCandidate);
+       UserIdToPeerConnection.get(sender).handleNewIceCandidateForeign(rtcIceCandidate);
     }
     
     
     private void setUpAudio() throws LineUnavailableException {
+        
         AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
         line = (SourceDataLine) AudioSystem.getLine(info);
         line.open(format);
         line.start();
+       
+         
     }
 
     public void OnNewAudio(byte[] audioData) {
@@ -148,13 +172,12 @@ public class WebRtcController implements WebRtcClient {
         if (CurrentRoom == null) return;
         
         messageSender.sendNewOffer(sdp,type,id);
-        
     }
     
     @Override
-    public void OnNewDataChannel(RTCDataChannel rtcDataChannel)
+    public void OnNewDataChannel(RTCDataChannel rtcDataChannel, String foreignID)
     {
-        webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel,this));
+        webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel,this,foreignID));
     }
     
     

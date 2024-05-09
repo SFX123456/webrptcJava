@@ -1,7 +1,9 @@
 package org.example;
 
 import dev.onvoid.webrtc.*;
+import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.MediaStream;
+import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.audio.AudioTrackSource;
@@ -13,6 +15,7 @@ import java.io.InputStreamReader;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class WebRtcWrapper {
     public WebRtcClient webRtcClient;
@@ -24,12 +27,17 @@ public class WebRtcWrapper {
    
    public RTCRtpTransceiver rtcRtpTransceiver;
    public WebRtcDataChannelHandler webRtcDataChannelHandler;
+   public boolean sentInitializeMethod = false;
+   public String userResponsibleFor = null;
     
     private OwnAudio getOwnAudio() {
         AudioOptions audioOptions = new AudioOptions();
+        
         AudioTrackSource audioTrackSource = peerConnectionFactory.createAudioSource(audioOptions);
         
         AudioTrack audioTrack =  peerConnectionFactory.createAudioTrack("audio",audioTrackSource);
+      //  AudioDevice audioDevice = MediaDevices.getDefaultAudioRenderDevice();
+        
         ArrayList<String> g = new ArrayList<>();
         g.add("audio");
         return new OwnAudio(audioTrack, g);
@@ -44,7 +52,7 @@ public class WebRtcWrapper {
     }
     
     private RTCPeerConnection getRtcPeerConnection() {
-        return peerConnectionFactory.createPeerConnection(rtcConfiguration, new WebRtcPeerConnectionHandler(webRtcClient));
+        return peerConnectionFactory.createPeerConnection(rtcConfiguration, new WebRtcPeerConnectionHandler(webRtcClient, userResponsibleFor));
     }
     public void startOfferSending(String userID)
     {
@@ -53,6 +61,7 @@ public class WebRtcWrapper {
     }
     public void handleNewAccept(String sdp, String type, String id)
     {
+        System.out.println("handlenew accept");
         RTCSessionDescription rtcSessionDescription = new RTCSessionDescription(stringRTCSdpTypeHashMap.get(type), sdp);
         System.out.println(rtcPeerConnection.getConnectionState());
         rtcPeerConnection.setRemoteDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
@@ -99,7 +108,8 @@ public class WebRtcWrapper {
             }
         });
     }
-    public WebRtcWrapper(WebRtcClient webRtcClient) throws IOException {
+    public WebRtcWrapper(WebRtcClient webRtcClient, String userResponsibleFor)throws IOException {
+        this.userResponsibleFor = userResponsibleFor;
         for (int i = 0; i < RTCSdpType.values().length; i++) {
             RTCSdpType x = RTCSdpType.values()[i];
             stringRTCSdpTypeHashMap.put(x.name(),x);
@@ -120,7 +130,7 @@ public class WebRtcWrapper {
 
         System.out.println("setting up datachannel");
         RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
-        webRtcClient.OnNewDataChannel(dataChannel); 
+        webRtcClient.OnNewDataChannel(dataChannel, userResponsibleFor); 
     } 
     
     
@@ -193,6 +203,7 @@ public class WebRtcWrapper {
     {
         System.out.println("handleNewIceCandidateForeign");
         rtcPeerConnection.addIceCandidate(rtcIceCandidate);
+        System.out.println("added rtc ice candidate");
     }
     
 }

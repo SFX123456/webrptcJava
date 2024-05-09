@@ -3,39 +3,37 @@ package org.example;
 import dev.onvoid.webrtc.*;
 import dev.onvoid.webrtc.media.MediaStream;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
+import dev.onvoid.webrtc.media.audio.AudioPlayer;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.audio.AudioTrackSink;
 import dev.onvoid.webrtc.media.video.VideoFrame;
 import dev.onvoid.webrtc.media.video.VideoTrack;
 import dev.onvoid.webrtc.media.video.VideoTrackSink;
+import org.java_websocket.handshake.ClientHandshake;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
     public WebRtcClient webRtcClient;
-    public WebRtcPeerConnectionHandler(WebRtcClient webRtcClient)
+    private String foreignID = null;
+    public WebRtcPeerConnectionHandler(WebRtcClient webRtcClient, String foreignID)
     {
+        this.foreignID = foreignID;
         this.webRtcClient = webRtcClient;
     }
+    private AudioPlayer audioPlayer;
     private boolean sendInitialMessage = false;
     @Override
     public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
         System.out.println("got new ice candidate");
         if (rtcIceCandidate == null) return;
         webRtcClient.OnNewOwnIceCandidate(rtcIceCandidate.sdp, rtcIceCandidate.sdpMid, rtcIceCandidate.sdpMLineIndex);
-                /*
-                JSONObject candidateJson = new JSONObject();
-                candidateJson.put("candidate", rtcIceCandidate.sdp);
-                candidateJson.put("sdpMid", rtcIceCandidate.sdpMid);
-                candidateJson.put("sdpMLineIndex", rtcIceCandidate.sdpMLineIndex);
-
-                String candidateString = candidateJson.toString();
-                System.out.println(candidateString);
-                candidates.add(candidateString);
-               
-                 */
+        
     }
 
 
@@ -57,15 +55,19 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         }
         else {
             System.out.println("its an audiotrack");
+            
             AudioTrack audioTrack1 = (AudioTrack) typ;
+           
             audioTrack1.addSink(new AudioTrackSink() {
                 @Override
                 public void onData(byte[] bytes, int i, int i1, int i2, int i3) {
-                    System.out.println("got audio data");
-                    System.out.println(bytes.length);
+                    //System.out.println("got audio data");
+                    //System.out.println(bytes.length);
                     webRtcClient.OnNewAudio(bytes);
                 }
             });
+            
+             
 
         }
     }
@@ -80,7 +82,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     public void onDataChannel(RTCDataChannel dataChannel) {
         System.out.println("client b got data channel");
         System.out.println("never gets called");
-        webRtcClient.OnNewDataChannel(dataChannel);
+        webRtcClient.OnNewDataChannel(dataChannel,foreignID);
         
     }
 
@@ -96,7 +98,8 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     @Override
     public void onConnectionChange(RTCPeerConnectionState state)
     {
-        System.out.println("sdlfjnsufidn");
+      System.out.println("con changed"); 
+
     }
     @Override
     public void onIceConnectionChange(RTCIceConnectionState state) {
@@ -118,6 +121,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     }
 
     public void onIceCandidateError(RTCPeerConnectionIceErrorEvent event) {
+        System.out.println("ice candidate erro");
         Logger.LogError(event.getErrorText());
     }
     

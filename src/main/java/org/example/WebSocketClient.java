@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
-    private WebRtcClient webRtcClient;
+    public WebRtcClient webRtcClient;
     public WebSocketClient(URI serverUri,int id, WebRtcClient webRtcClientMessageSender) {
         
         super(serverUri);
@@ -100,7 +100,8 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         String sdp = (String)map.get("sdp");
         String type = (String)map.get("type");
         String userID = (String)map.get("userID");
-        webRtcClient.OnGotAnswer(sdp,type,userID);
+        String sender = (String)map.get("sender");
+        webRtcClient.OnGotAnswer(sdp,type,userID,sender);
     }
 
     private void handleNewPersonJoined(String message, EventData data)

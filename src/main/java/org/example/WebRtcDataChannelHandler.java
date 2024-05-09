@@ -1,19 +1,20 @@
 package org.example;
 
-import dev.onvoid.webrtc.RTCDataChannel;
-import dev.onvoid.webrtc.RTCDataChannelBuffer;
-import dev.onvoid.webrtc.RTCDataChannelObserver;
-import dev.onvoid.webrtc.RTCDataChannelState;
+import dev.onvoid.webrtc.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class WebRtcDataChannelHandler {
     public RTCDataChannel rtcDataChannel;
     private WebRtcClient webRtcClient;
-    private boolean sendHelloMethod = false;
-    public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel, WebRtcClient webRtcClient)
+    private String foreignID;
+    public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel, WebRtcClient webRtcClient, String foreignID)
     {
+        this.foreignID = foreignID;
         this.rtcDataChannel = rtcDataChannel;
         this.webRtcClient = webRtcClient;
        registerListener(); 
@@ -33,27 +34,10 @@ public class WebRtcDataChannelHandler {
                 System.out.println("DataChannel state changed");
                 System.out.println(rtcDataChannel.getState());
                 if (!rtcDataChannel.getState().equals(RTCDataChannelState.OPEN))return;
-                if(sendHelloMethod) return;
-                sendHelloMethod = true;
+                if (webRtcClient.DidSendInitializeMethod(foreignID))return;
                 webRtcClient.OnNewBroadcastMessageRequested("Hallo welt");
-                /*
-                ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
-
-                String message = "Hello, WebRTC!";
-                sendBuffer.put(message.getBytes(StandardCharsets.UTF_8));
-
-                sendBuffer.flip();
-                System.out.println("Sending buffer");
-                System.out.println("Position: " + sendBuffer.position());
-                System.out.println("Limit: " + sendBuffer.limit());
-                System.out.println("Capacity: " + sendBuffer.capacity());
-                try {
-                    rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer,false));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
                 
-                */
+                webRtcClient.SentInitializeMessage(foreignID);
             }
 
            @Override
@@ -74,6 +58,23 @@ public class WebRtcDataChannelHandler {
                } else {
                    System.out.println("No data to read");
                }
+
+               if (webRtcClient.getID() != 5)return;
+               if (!webRtcClient.DidSendInitializeMethod(foreignID)) return;
+
+                Thread thread = new Thread(() -> {
+                    while (true) {
+                        System.out.println("type in new message to send");
+                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+                        try {
+                            String line = bufferedReader.readLine();
+                            webRtcClient.OnNewBroadcastMessageRequested(line);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+                thread.start();
            }
         });
     }
