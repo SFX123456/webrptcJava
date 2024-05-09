@@ -78,6 +78,16 @@ public class MessageSender {
         sendEventData(eventData);
     }
 
+    public void sendRequestAskDoesGroupExistMessage(String roomName)
+    {
+        EventData eventData = new EventData();
+        eventData.setEventName("__does_group_exist");
+        HashMap hashMap = new HashMap<String, String>();
+        hashMap.put("roomName",roomName);
+        hashMap.put("userID", String.valueOf(webSocketClient.webRtcClient.getID()));
+        eventData.setData(hashMap);
+        sendEventData(eventData);
+    }
     public void sendNewOffer(String sdp, String type, String i) {
         EventData eventData = new EventData();
         eventData.setEventName("__offer");

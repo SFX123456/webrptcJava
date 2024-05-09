@@ -88,11 +88,25 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
             case "__new_joined":
                 handleNewPersonJoined(message,data);
                 break;
+            case "__does_group_exist":
+                handleDoesRoomExist(message,data);
+                break;
+            
             default:
                 System.out.println("got new method " + data.getEventName());
                 break;
         }
 
+    }
+
+    private void handleDoesRoomExist(String message, EventData data) {
+        Map map = data.getData();
+        String res = (String)map.get("res");
+        if (res.equals("Y")) {
+            
+        }
+        
+        
     }
 
     private void handleNewAnswer(String message, EventData data) {

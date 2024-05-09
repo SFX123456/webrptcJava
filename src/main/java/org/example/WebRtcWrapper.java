@@ -108,7 +108,7 @@ public class WebRtcWrapper {
             }
         });
     }
-    public WebRtcWrapper(WebRtcClient webRtcClient, String userResponsibleFor)throws IOException {
+    public WebRtcWrapper(WebRtcClient webRtcClient, String userResponsibleFor, boolean shouldCreateDataChannel)throws IOException {
         this.userResponsibleFor = userResponsibleFor;
         for (int i = 0; i < RTCSdpType.values().length; i++) {
             RTCSdpType x = RTCSdpType.values()[i];
@@ -118,18 +118,19 @@ public class WebRtcWrapper {
         this.peerConnectionFactory = new PeerConnectionFactory();
         this.rtcConfiguration = getRtcConfiguration();
         this.rtcPeerConnection = getRtcPeerConnection();
+        if (shouldCreateDataChannel) 
+            setUpDataChannel();
         setUpDataToTransport(false,true, String.valueOf(webRtcClient.getID()));
         
         
         System.out.println("WebRtcWrapper initiated");
        
     }
-    public void setUpDataChannel(String id)
+    public void setUpDataChannel()
     {
-        if (webRtcClient.getID() != 5) return;
 
         System.out.println("setting up datachannel");
-        RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel("sendDataChannel", new RTCDataChannelInit());
+        RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel("sendDataChannel" + webRtcClient.getID(), new RTCDataChannelInit());
         webRtcClient.OnNewDataChannel(dataChannel, userResponsibleFor); 
     } 
     
@@ -137,8 +138,6 @@ public class WebRtcWrapper {
     
     public void setUpDataToTransport(boolean video, boolean audio,String id)
     {
-        if (webRtcClient.getID() != 5) return;
-        setUpDataChannel(id);
         if (audio) {
             System.out.println("requested audio");
             ownAudio = getOwnAudio();
@@ -149,8 +148,6 @@ public class WebRtcWrapper {
         if (video) {
             System.out.println("reuqested video");
         }
-   
-       
     }
     
     

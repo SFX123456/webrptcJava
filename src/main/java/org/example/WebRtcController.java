@@ -60,7 +60,7 @@ public class WebRtcController implements WebRtcClient {
    {
        CurrentRoom.getUserBeans().add(userBean);
        try {
-           WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userBean.getUserId());
+           WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userBean.getUserId(),true);
            UserIdToPeerConnection.put(userBean.getUserId(),webRtcWrapper1);
            System.out.println("sending offer to " + userBean.getUserId());
            webRtcWrapper1.startOfferSending(userBean.getUserId());
@@ -83,12 +83,7 @@ public class WebRtcController implements WebRtcClient {
     @Override
     public void OnConnectedToServer() throws IOException {
         System.out.println("Successfully connected to Websocketserver creating lobby");
-        if (myId == 5) {
-            System.out.println("my id " + myId);
-            messageSender.createNewRoom(ROOMNAME,MAXROOMSIZE);
-        }
-        else 
-            messageSender.joinRoom(ROOMNAME);
+        messageSender.joinRoom(ROOMNAME);
     }
     
     
@@ -104,7 +99,7 @@ public class WebRtcController implements WebRtcClient {
     public void OnGotOffer(String sdp, String type, String userID ) {
         System.out.println("received offer from " + userID);
         try {
-            WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userID);
+            WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userID,false);
             UserIdToPeerConnection.put(userID,webRtcWrapper1);
             webRtcWrapper1.handleNewReceivedOffer(sdp,type, userID);
         }
@@ -153,6 +148,8 @@ public class WebRtcController implements WebRtcClient {
     }
 
     public void OnNewAudio(byte[] audioData) {
+        if (myId != 5) return;
+       
         line.write(audioData, 0, audioData.length);
     }
     

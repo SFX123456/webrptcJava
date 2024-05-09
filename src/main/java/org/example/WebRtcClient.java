@@ -35,4 +35,5 @@ public interface WebRtcClient {
     public void OnSomeoneNewJoined(UserBean userBean);
     public void SentInitializeMessage(String foreignID);
     public boolean DidSendInitializeMethod(String foreignID);
+    
 }

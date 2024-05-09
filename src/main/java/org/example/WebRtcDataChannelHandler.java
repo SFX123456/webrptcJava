@@ -59,7 +59,7 @@ public class WebRtcDataChannelHandler {
                    System.out.println("No data to read");
                }
 
-               if (webRtcClient.getID() != 5)return;
+              
                if (!webRtcClient.DidSendInitializeMethod(foreignID)) return;
 
                 Thread thread = new Thread(() -> {
