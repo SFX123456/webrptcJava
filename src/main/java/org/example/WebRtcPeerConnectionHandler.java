@@ -49,7 +49,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             videoTrack1.addSink(new VideoTrackSink() {
                 @Override
                 public void onVideoFrame(VideoFrame videoFrame) {
-                    System.out.println("new frame received");
+                    System.out.println("new videoframe received");
                 }
             });
         }

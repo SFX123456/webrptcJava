@@ -7,7 +7,7 @@ import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.audio.AudioTrackSource;
-import dev.onvoid.webrtc.media.video.VideoDevice;
+import dev.onvoid.webrtc.media.video.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,6 +26,7 @@ public class WebRtcWrapper {
    public HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>(); 
    
    public RTCRtpTransceiver rtcRtpTransceiver;
+    public RTCRtpTransceiver videoRtpTransceiver;
    public WebRtcDataChannelHandler webRtcDataChannelHandler;
    public boolean sentInitializeMethod = false;
    public String userResponsibleFor = null;
@@ -41,6 +42,18 @@ public class WebRtcWrapper {
         ArrayList<String> g = new ArrayList<>();
         g.add("audio");
         return new OwnAudio(audioTrack, g);
+    }
+    private OwnVideo getOwnVideo() {
+        List<VideoDevice> captureDevices = MediaDevices.getVideoCaptureDevices();
+        System.out.println("amojuntof capture devices " + captureDevices.size());
+        VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
+        videoDeviceSource.setVideoCaptureDevice(captureDevices.get(0));
+        System.out.println("created video device source ");
+        VideoTrack videoTrack = peerConnectionFactory.createVideoTrack("video",(VideoTrackSource) videoDeviceSource);
+        ArrayList<String> g = new ArrayList<>();
+        g.add("video");
+        System.out.println("video set up 1");
+        return new OwnVideo(videoTrack,g);
     }
     private RTCConfiguration getRtcConfiguration() {
         RTCConfiguration f = new RTCConfiguration();
@@ -120,7 +133,7 @@ public class WebRtcWrapper {
         this.rtcPeerConnection = getRtcPeerConnection();
         if (shouldCreateDataChannel) 
             setUpDataChannel();
-        setUpDataToTransport(false,true, String.valueOf(webRtcClient.getID()));
+        setUpDataToTransport(true,false, String.valueOf(webRtcClient.getID()));
         
         
         System.out.println("WebRtcWrapper initiated");
@@ -147,6 +160,11 @@ public class WebRtcWrapper {
         }
         if (video) {
             System.out.println("reuqested video");
+            OwnVideo videoInfos = getOwnVideo();
+            System.out.println("video setup 2" + videoInfos.videoTrack.toString() + videoInfos.list.toString());
+            rtcPeerConnection.addTrack(videoInfos.videoTrack, videoInfos.list);
+            videoRtpTransceiver = rtcPeerConnection.addTransceiver(videoInfos.videoTrack, new RTCRtpTransceiverInit());
+            System.out.println("set video track");
         }
     }
     

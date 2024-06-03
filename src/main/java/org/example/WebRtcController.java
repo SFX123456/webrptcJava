@@ -58,6 +58,7 @@ public class WebRtcController implements WebRtcClient {
    @Override
    public void OnSomeoneNewJoined(UserBean userBean)
    {
+       System.out.println("on someone new joined");
        CurrentRoom.getUserBeans().add(userBean);
        try {
            WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userBean.getUserId(),true);
@@ -68,6 +69,8 @@ public class WebRtcController implements WebRtcClient {
        catch (Exception e) {
             Logger.LogError(e.getMessage());
        }
+       Logger.LogMessage("on someone new joined end");
+    
    }
 
     @Override
@@ -148,6 +151,7 @@ public class WebRtcController implements WebRtcClient {
     }
 
     public void OnNewAudio(byte[] audioData) {
+        System.out.println("new audio");
         if (myId != 5) return;
        
         line.write(audioData, 0, audioData.length);
@@ -167,13 +171,14 @@ public class WebRtcController implements WebRtcClient {
     public void OnSuccessfullyCreatedOffer(String sdp, String type, String id) {
         System.out.println("succes created offer");
         if (CurrentRoom == null) return;
-        
+      
         messageSender.sendNewOffer(sdp,type,id);
     }
     
     @Override
     public void OnNewDataChannel(RTCDataChannel rtcDataChannel, String foreignID)
     {
+        System.out.println("new data channel");
         webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel,this,foreignID));
     }
     
@@ -181,6 +186,7 @@ public class WebRtcController implements WebRtcClient {
     @Override
     public void OnNewBroadcastMessageRequested(String message)
     {
+        System.out.println("new broadcast message req");
         ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
         sendBuffer.put(message.getBytes(StandardCharsets.UTF_8));
         System.out.println("broadcasting message" + webRtcDataChannelHandlers.size());

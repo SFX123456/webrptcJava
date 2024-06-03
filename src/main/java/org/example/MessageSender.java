@@ -4,6 +4,7 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 public class MessageSender {
     public WebSocketClient webSocketClient;
@@ -93,10 +94,19 @@ public class MessageSender {
         eventData.setEventName("__offer");
         Map map = new HashMap<String, String>();
         map.put("userID",i);
-        map.put("sdp",sdp );
+        int x = sdp.length();
+        String data1 = sdp.substring(0,Math.round(x/2));
+        String data2 = sdp.substring(Math.round(x/2));
+        map.put("data", data1);
         map.put("type",type);
         map.put("sendbackto", webSocketClient.myId);
+        map.put("part", "1");
         eventData.setData(map);
        sendEventData(eventData);
+        map.remove("data");
+        map.put("data", data2);
+        map.remove("part");
+        map.put("part", "2");
+        sendEventData(eventData);
     }
 }

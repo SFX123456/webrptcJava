@@ -23,7 +23,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     public WebRtcClient webRtcClient;
     public WebSocketClient(URI serverUri,int id, WebRtcClient webRtcClientMessageSender) {
-        
         super(serverUri);
         myId = String.valueOf(id);
         webRtcClient = webRtcClientMessageSender;
@@ -52,12 +51,12 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        System.out.println("onclose");
+        System.out.println("onclose   " + i + " " + s + " " + b);
     }
 
     @Override
     public void onError(Exception e) {
-        System.out.println("onerror");
+        System.out.println("onerror " + e.getMessage());
     }
     
     private void handleMessage(String message) throws IOException {
@@ -100,6 +99,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     }
 
     private void handleDoesRoomExist(String message, EventData data) {
+        System.out.println("room does not exist");
         Map map = data.getData();
         String res = (String)map.get("res");
         if (res.equals("Y")) {
