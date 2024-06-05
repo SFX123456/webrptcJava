@@ -70,12 +70,24 @@ public class MessageSender {
     {
         EventData eventData = new EventData();
         eventData.setEventName("__answer");
-        HashMap hashMap = new HashMap<String, String>();
-        hashMap.put("userID",id);
-        hashMap.put("sdp",sdp);
-        hashMap.put("type",type);
-        hashMap.put("sender",String.valueOf(webSocketClient.webRtcClient.getID()));
-        eventData.setData(hashMap);
+
+        HashMap map = new HashMap<String, String>();
+        map.put("userID",id);
+        map.put("sender",String.valueOf(webSocketClient.webRtcClient.getID()));
+        int x = sdp.length();
+        String data1 = sdp.substring(0,Math.round(x/3));
+        String data2 = sdp.substring(Math.round(x/3));
+        map.put("data", data1);
+        map.put("type",type);
+        map.put("sendbackto", webSocketClient.myId);
+        map.put("part", "1");
+        eventData.setData(map);
+        sendEventData(eventData);
+        map.remove("data");
+        map.remove("type");
+        map.put("data", data2);
+        map.remove("part");
+        map.put("part", "2");
         sendEventData(eventData);
     }
 
@@ -94,9 +106,10 @@ public class MessageSender {
         eventData.setEventName("__offer");
         Map map = new HashMap<String, String>();
         map.put("userID",i);
+        Logger.LogMessage("the sdp i wanna send " + sdp);
         int x = sdp.length();
-        String data1 = sdp.substring(0,Math.round(x/2));
-        String data2 = sdp.substring(Math.round(x/2));
+        String data1 = sdp.substring(0,Math.round(x/3));
+        String data2 = sdp.substring(Math.round(x/3));
         map.put("data", data1);
         map.put("type",type);
         map.put("sendbackto", webSocketClient.myId);
@@ -104,6 +117,7 @@ public class MessageSender {
         eventData.setData(map);
        sendEventData(eventData);
         map.remove("data");
+        map.remove("type");
         map.put("data", data2);
         map.remove("part");
         map.put("part", "2");

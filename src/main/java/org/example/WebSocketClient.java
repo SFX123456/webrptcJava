@@ -17,13 +17,18 @@ import java.net.URI;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     public WebRtcClient webRtcClient;
+    private HashMap<String,Map> userOffer;
+    private HashMap<String,Map> userAnswer;
     public WebSocketClient(URI serverUri,int id, WebRtcClient webRtcClientMessageSender) {
         super(serverUri);
+        userOffer = new HashMap<String,Map>();
+        userAnswer =new HashMap<String,Map>(); 
         myId = String.valueOf(id);
         webRtcClient = webRtcClientMessageSender;
     }
@@ -110,11 +115,25 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     }
 
     private void handleNewAnswer(String message, EventData data) {
+
+        System.out.println("got new answer");
         Map map = data.getData();
-        String sdp = (String)map.get("sdp");
-        String type = (String)map.get("type");
-        String userID = (String)map.get("userID");
-        String sender = (String)map.get("sender");
+
+        String sendbackto = (String) map.get("sendbackto");
+        String part = (String) map.get("part");
+        if (part.equals("1")) {
+            userAnswer.put(sendbackto,map);
+            return;
+        }
+        Map oldmap = userAnswer.get(sendbackto);
+        String sdp = (String) oldmap.get("data");
+        sdp+= (String) map.get("data");
+
+        String type = (String) oldmap.get("type");
+        String sender = (String)oldmap.get("sender");
+    
+        String userID = (String)oldmap.get("userID");
+       
         webRtcClient.OnGotAnswer(sdp,type,userID,sender);
     }
 
@@ -148,12 +167,20 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     private void handleNewOffer(String message, EventData data) {
         System.out.println("got new offer");
         Map map = data.getData();
-        String type = (String) map.get("type");
-        String sdp = (String) map.get("sdp");
-        String id = (String) map.get("userID"); 
+
         String sendbackto = (String) map.get("sendbackto");
-        webRtcClient.OnGotOffer(sdp,type, sendbackto);
+        String part = (String) map.get("part");
+        if (part.equals("1")) {
+            userOffer.put(sendbackto,map);
+            return;
+        }
+        Map oldmap = userOffer.get(sendbackto);
+        String sdp = (String) oldmap.get("data");
+        sdp+= (String) map.get("data");
         
+        String type = (String) oldmap.get("type");
+        String id = (String) oldmap.get("userID"); 
+        webRtcClient.OnGotOffer(sdp,type, sendbackto);
     }
 
     private void handleNewIceClient(String message, EventData data) {

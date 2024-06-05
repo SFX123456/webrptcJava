@@ -3,6 +3,7 @@ package org.example;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.RTCIceCandidate;
+import dev.onvoid.webrtc.media.video.VideoFrame;
 import org.example.bean.EventData;
 import org.example.bean.RoomInfo;
 import org.example.bean.UserBean;
@@ -151,12 +152,17 @@ public class WebRtcController implements WebRtcClient {
     }
 
     public void OnNewAudio(byte[] audioData) {
-        System.out.println("new audio");
+        //System.out.println("new audio");
         if (myId != 5) return;
        
         line.write(audioData, 0, audioData.length);
     }
-    
+
+    @Override
+    public void OnNewVideoFrame(VideoFrame videoFrame) {
+        System.out.println("received new video frame");
+    }
+
     public void OnNewOwnIceCandidate(String sdp, String sdpMid, int sdpMLineIndex )
     {
         System.out.println("broadcast message");

@@ -2,6 +2,7 @@ package org.example;
 
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCIceCandidate;
+import dev.onvoid.webrtc.media.video.VideoFrame;
 import org.example.bean.EventData;
 import org.example.bean.RoomInfo;
 import org.example.bean.UserBean;
@@ -23,6 +24,7 @@ public interface WebRtcClient {
     public void OnHandledAccept(String userID);
     
     public void OnNewAudio(byte[] audioData);
+    public void OnNewVideoFrame(VideoFrame videoFrame);
 
     public void OnSendAnswer(String sdp, String type, String id);
 

@@ -53,6 +53,14 @@ public class WebRtcWrapper {
         ArrayList<String> g = new ArrayList<>();
         g.add("video");
         System.out.println("video set up 1");
+        videoTrack.addSink(new VideoTrackSink() {
+            @Override
+            public void onVideoFrame(VideoFrame videoFrame) {
+                System.out.println("video frame ");
+            }
+        });
+        videoTrack.setEnabled(true);
+        System.out.println("is enabled video" + videoTrack.isEnabled());
         return new OwnVideo(videoTrack,g);
     }
     private RTCConfiguration getRtcConfiguration() {
@@ -133,7 +141,7 @@ public class WebRtcWrapper {
         this.rtcPeerConnection = getRtcPeerConnection();
         if (shouldCreateDataChannel) 
             setUpDataChannel();
-        setUpDataToTransport(true,false, String.valueOf(webRtcClient.getID()));
+        setUpDataToTransport(true,true, String.valueOf(webRtcClient.getID()));
         
         
         System.out.println("WebRtcWrapper initiated");

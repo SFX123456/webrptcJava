@@ -17,6 +17,7 @@ public class WebRtcDataChannelHandler {
         this.foreignID = foreignID;
         this.rtcDataChannel = rtcDataChannel;
         this.webRtcClient = webRtcClient;
+        
        registerListener(); 
     }
     
