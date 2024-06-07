@@ -29,17 +29,13 @@ import java.util.HashMap;
 public class App 
 {
     public static void main( String[] args ) throws IOException, URISyntaxException, InterruptedException {
-     
-        new VideoSender(null);
         
-        /*
         int myId = Integer.parseInt(args[0]);
         new WebRtcController(myId);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         String line = bufferedReader.readLine();
         System.out.println(line);
        
-         */
     }
 
   

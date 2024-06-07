@@ -2,18 +2,22 @@ package org.example;
 
 import dev.onvoid.webrtc.*;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+
 public class WebRtcDataChannelHandler {
     public RTCDataChannel rtcDataChannel;
     private WebRtcClient webRtcClient;
     private String foreignID;
+    private VideoViewer videoViewer;
     public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel, WebRtcClient webRtcClient, String foreignID)
     {
+        this.videoViewer = new VideoViewer();
         this.foreignID = foreignID;
         this.rtcDataChannel = rtcDataChannel;
         this.webRtcClient = webRtcClient;
@@ -36,8 +40,9 @@ public class WebRtcDataChannelHandler {
                 System.out.println(rtcDataChannel.getState());
                 if (!rtcDataChannel.getState().equals(RTCDataChannelState.OPEN))return;
                 if (webRtcClient.DidSendInitializeMethod(foreignID))return;
-                webRtcClient.OnNewBroadcastMessageRequested("Hallo welt");
-                
+                //webRtcClient.OnNewBroadcastMessageRequested("Hallo welt");
+                Logger.LogMessage("should send video messages niow");
+                webRtcClient.OnDataChannelForVideoReady(rtcDataChannel);
                 webRtcClient.SentInitializeMessage(foreignID);
             }
 
@@ -50,32 +55,16 @@ public class WebRtcDataChannelHandler {
                System.out.println("Position: " + buffer.position());
                System.out.println("Limit: " + buffer.limit());
                System.out.println("Capacity: " + buffer.capacity());
-
+               Logger.LogMessage("remaining : " + buffer.remaining()); 
+               
                if (buffer.hasRemaining()) {
                    byte[] bytes = new byte[buffer.remaining()];
                    buffer.get(bytes);
-                   String receivedMessage = new String(bytes, StandardCharsets.UTF_8);
-                   System.out.println("Received message: " + receivedMessage);
+                   videoViewer.OnNewVideoFrame(bytes);
+                   buffer.clear();
                } else {
                    System.out.println("No data to read");
                }
-
-              
-               if (!webRtcClient.DidSendInitializeMethod(foreignID)) return;
-
-                Thread thread = new Thread(() -> {
-                    while (true) {
-                        System.out.println("type in new message to send");
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-                        try {
-                            String line = bufferedReader.readLine();
-                            webRtcClient.OnNewBroadcastMessageRequested(line);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-                thread.start();
            }
         });
     }

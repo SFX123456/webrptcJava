@@ -1,8 +1,13 @@
 package org.example;
 
+import com.github.sarxos.webcam.Webcam;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
+import dev.onvoid.webrtc.media.video.VideoCapture;
+import dev.onvoid.webrtc.media.video.VideoTrack;
+import dev.onvoid.webrtc.media.video.VideoTrackSource;
 import org.bytedeco.javacv.CanvasFrame;
+import org.bytedeco.javacv.FrameGrabber;
 import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.OpenCVFrameGrabber;
 
@@ -15,50 +20,70 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VideoSender {
     public RTCDataChannel rtcDataChannel;
+    public VideoViewer videoViewer;
     public VideoSender(RTCDataChannel rtcDataChannel) throws IOException {
         this.rtcDataChannel = rtcDataChannel;
-        Thread thread = new Thread((Runnable) () -> {
-            try {
-                runLoop();
-            } catch (IOException e) {
-                Logger.LogMessage("VideoSender Error: " + e.getMessage());
-            }
-        });
-        thread.start();
+        this.videoViewer = new VideoViewer();
+      
     }
+     public void sendMessages()
+     {
+         Thread t = new Thread(() ->  {
+            try{
+                 runLoop();
+             } catch (Exception e) {
+
+                 Logger.LogMessage("VideoSender Error: " + e.getMessage());
+             }
+         });
+         t.start();
+     }
     
-    private void runLoop() throws IOException {
-        OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(0);
-        grabber.start();
+    private void runLoop() throws Exception {
+        Logger.LogMessage("running loop 1");
 
-        // Capture one frame
-        CanvasFrame canvas = new CanvasFrame("Webcam");
-        canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-        while (true) {
+        //OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(1);
+        List<Webcam> webcams = Webcam.getWebcams();
 
-            org.bytedeco.javacv.Frame frame = grabber.grab();
-            Java2DFrameConverter converter = new Java2DFrameConverter();
-            BufferedImage bufferedImage = converter.convert(frame);
-
-            // Convert BufferedImage to byte array
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(bufferedImage, "jpg", baos);
-            byte[] imageBytes = baos.toByteArray();
-            BufferedImage imageFromBytes = byteArrayToBufferedImage(imageBytes);
-
-            // Create a frame to display the image
-            // Display the BufferedImage on the canvas
-            canvas.showImage(converter.convert(imageFromBytes));
-     
-            try {
-                Thread.sleep(33);
-            } catch (InterruptedException e) {
-                Logger.LogMessage("error with thread: " + e.getMessage());
+        if (webcams.isEmpty()) {
+            System.out.println("No webcams found.");
+        } else {
+            for (int i = 0; i < webcams.size(); i++) {
+                System.out.println("Webcam " + i + ": " + webcams.get(i).getName());
             }
         }
+        Webcam webcam = webcams.get(0);
+        webcam.open();
+       
+       
+            while (true) {
+
+                BufferedImage image = webcam.getImage();
+                // Convert BufferedImage to byte array
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(image, "jpg", baos);
+                Logger.LogMessage("running loop 6");
+                byte[] imageBytes = baos.toByteArray();
+                Logger.LogMessage("running loop 7");
+                sendMessage(imageBytes);
+                Logger.LogMessage("running loop 8");
+                Logger.LogMessage("sending bytes " + imageBytes.length);
+                videoViewer.OnNewVideoFrame(imageBytes);
+                Logger.LogMessage("running loop 9");
+
+                try {
+                    Thread.sleep(33);
+                } catch (InterruptedException e) {
+                    Logger.LogMessage("error with thread: " + e.getMessage());
+                }
+            }
+        
+       
 
     }
 
@@ -73,11 +98,9 @@ public class VideoSender {
         ByteBuffer sendBuffer = ByteBuffer.allocate(bytes.length);
         sendBuffer.put(bytes);
         rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer,false));
+        Logger.LogMessage("send new image");
     }
 
-    private static BufferedImage byteArrayToBufferedImage(byte[] imageBytes) throws IOException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
-        return ImageIO.read(bais);
-    }
+ 
     
 }

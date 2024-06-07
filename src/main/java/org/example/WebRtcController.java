@@ -4,6 +4,7 @@ import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.RTCIceCandidate;
 import dev.onvoid.webrtc.media.video.VideoFrame;
+import org.bytedeco.javacv.FrameFilter;
 import org.example.bean.EventData;
 import org.example.bean.RoomInfo;
 import org.example.bean.UserBean;
@@ -32,6 +33,7 @@ public class WebRtcController implements WebRtcClient {
     final public int MAXROOMSIZE = 5;
     final public String ROOMNAME = "helloworld";
     private static Object object = new Object();
+    private VideoSender videoSender;
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     public WebRtcController(int id) throws URISyntaxException, IOException {
         myId = id;
@@ -161,6 +163,19 @@ public class WebRtcController implements WebRtcClient {
     @Override
     public void OnNewVideoFrame(VideoFrame videoFrame) {
         System.out.println("received new video frame");
+    }
+
+    @Override
+    public void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel) {
+        try {
+            Logger.LogMessage("setting up video");
+            if (myId != 5) return;
+            this.videoSender = new VideoSender(rtcDataChannel);
+            videoSender.sendMessages();
+        }
+        catch (Exception e) {
+            Logger.LogError("Error with video" + e.getMessage());
+        }
     }
 
     public void OnNewOwnIceCandidate(String sdp, String sdpMid, int sdpMLineIndex )

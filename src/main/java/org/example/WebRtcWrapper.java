@@ -43,26 +43,7 @@ public class WebRtcWrapper {
         g.add("audio");
         return new OwnAudio(audioTrack, g);
     }
-    private OwnVideo getOwnVideo() {
-        List<VideoDevice> captureDevices = MediaDevices.getVideoCaptureDevices();
-        System.out.println("amojuntof capture devices " + captureDevices.size());
-        VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
-        videoDeviceSource.setVideoCaptureDevice(captureDevices.get(0));
-        System.out.println("created video device source ");
-        VideoTrack videoTrack = peerConnectionFactory.createVideoTrack("video",(VideoTrackSource) videoDeviceSource);
-        ArrayList<String> g = new ArrayList<>();
-        g.add("video");
-        System.out.println("video set up 1");
-        videoTrack.addSink(new VideoTrackSink() {
-            @Override
-            public void onVideoFrame(VideoFrame videoFrame) {
-                System.out.println("video frame ");
-            }
-        });
-        videoTrack.setEnabled(true);
-        System.out.println("is enabled video" + videoTrack.isEnabled());
-        return new OwnVideo(videoTrack,g);
-    }
+   
     private RTCConfiguration getRtcConfiguration() {
         RTCConfiguration f = new RTCConfiguration();
         RTCIceServer rtcIceServer = new RTCIceServer();
@@ -141,7 +122,7 @@ public class WebRtcWrapper {
         this.rtcPeerConnection = getRtcPeerConnection();
         if (shouldCreateDataChannel) 
             setUpDataChannel();
-        setUpDataToTransport(true,true, String.valueOf(webRtcClient.getID()));
+        setUpDataToTransport();
         
         
         System.out.println("WebRtcWrapper initiated");
@@ -157,23 +138,14 @@ public class WebRtcWrapper {
     
     
     
-    public void setUpDataToTransport(boolean video, boolean audio,String id)
+    public void setUpDataToTransport()
     {
-        if (audio) {
-            System.out.println("requested audio");
-            ownAudio = getOwnAudio();
-            rtcPeerConnection.addTrack(ownAudio.audioTrack, ownAudio.list);
-            rtcRtpTransceiver = rtcPeerConnection.addTransceiver(ownAudio.audioTrack, new RTCRtpTransceiverInit());
-            System.out.println("set audio track");
-        }
-        if (video) {
-            System.out.println("reuqested video");
-            OwnVideo videoInfos = getOwnVideo();
-            System.out.println("video setup 2" + videoInfos.videoTrack.toString() + videoInfos.list.toString());
-            rtcPeerConnection.addTrack(videoInfos.videoTrack, videoInfos.list);
-            videoRtpTransceiver = rtcPeerConnection.addTransceiver(videoInfos.videoTrack, new RTCRtpTransceiverInit());
-            System.out.println("set video track");
-        }
+        System.out.println("requested audio");
+        ownAudio = getOwnAudio();
+        rtcPeerConnection.addTrack(ownAudio.audioTrack, ownAudio.list);
+        rtcRtpTransceiver = rtcPeerConnection.addTransceiver(ownAudio.audioTrack, new RTCRtpTransceiverInit());
+        System.out.println("set audio track");
+       
     }
     
     
