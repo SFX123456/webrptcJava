@@ -10,6 +10,7 @@ import org.bytedeco.javacv.CanvasFrame;
 import org.bytedeco.javacv.FrameGrabber;
 import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.OpenCVFrameGrabber;
+import org.bytedeco.opencv.presets.opencv_core;
 
 import javax.imageio.ImageIO;
 import javax.xml.stream.FactoryConfigurationError;
@@ -26,10 +27,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class VideoSender {
     public RTCDataChannel rtcDataChannel;
     public VideoViewer videoViewer;
-    public VideoSender(RTCDataChannel rtcDataChannel) throws IOException {
+    private Object lock;
+    public VideoSender(RTCDataChannel rtcDataChannel, Object lock) throws IOException {
         this.rtcDataChannel = rtcDataChannel;
         this.videoViewer = new VideoViewer();
-      
+        this.lock = lock;
     }
      public void sendMessages()
      {
@@ -45,7 +47,6 @@ public class VideoSender {
      }
     
     private void runLoop() throws Exception {
-        Logger.LogMessage("running loop 1");
 
         //OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(1);
         List<Webcam> webcams = Webcam.getWebcams();
@@ -67,14 +68,11 @@ public class VideoSender {
                 // Convert BufferedImage to byte array
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(image, "jpg", baos);
-                Logger.LogMessage("running loop 6");
                 byte[] imageBytes = baos.toByteArray();
-                Logger.LogMessage("running loop 7");
-                sendMessage(imageBytes);
-                Logger.LogMessage("running loop 8");
-                Logger.LogMessage("sending bytes " + imageBytes.length);
+               synchronized (lock) {
+                   sendMessage(imageBytes);
+               }
                 videoViewer.OnNewVideoFrame(imageBytes);
-                Logger.LogMessage("running loop 9");
 
                 try {
                     Thread.sleep(33);
@@ -98,7 +96,6 @@ public class VideoSender {
         ByteBuffer sendBuffer = ByteBuffer.allocate(bytes.length);
         sendBuffer.put(bytes);
         rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer,false));
-        Logger.LogMessage("send new image");
     }
 
  

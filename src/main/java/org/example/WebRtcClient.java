@@ -24,8 +24,8 @@ public interface WebRtcClient {
     public void OnHandledAccept(String userID);
     
     public void OnNewAudio(byte[] audioData);
-    public void OnNewVideoFrame(VideoFrame videoFrame);
-    void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel);
+    void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel, Object lock);
+    void OnDataChannelForTextReady(RTCDataChannel rtcDataChannel, Object lock);
     public void OnSendAnswer(String sdp, String type, String id);
 
     public void OnNewOwnIceCandidate(String sdp, String sdpMid, int sdpMLineIndex);

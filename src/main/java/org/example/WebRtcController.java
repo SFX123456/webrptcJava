@@ -35,6 +35,7 @@ public class WebRtcController implements WebRtcClient {
     private static Object object = new Object();
     private VideoSender videoSender;
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
+    private TranscriptionSender transcriptionSender;
     public WebRtcController(int id) throws URISyntaxException, IOException {
         myId = id;
         webSocketClient = connectToWebSocketServer();
@@ -161,20 +162,29 @@ public class WebRtcController implements WebRtcClient {
     }
 
     @Override
-    public void OnNewVideoFrame(VideoFrame videoFrame) {
-        System.out.println("received new video frame");
-    }
-
-    @Override
-    public void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel) {
+    public void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel, Object lock) {
         try {
             Logger.LogMessage("setting up video");
             if (myId != 5) return;
-            this.videoSender = new VideoSender(rtcDataChannel);
+            //condition need to change
+            this.videoSender = new VideoSender(rtcDataChannel,lock);
             videoSender.sendMessages();
         }
         catch (Exception e) {
             Logger.LogError("Error with video" + e.getMessage());
+        }
+    }
+
+    @Override
+    public void OnDataChannelForTextReady(RTCDataChannel rtcDataChannel, Object lock) {
+        Logger.LogMessage("setting up transcription");
+        if (myId != 5) return;
+        try {
+            transcriptionSender = new TranscriptionSender(rtcDataChannel,lock);
+            transcriptionSender.sendMessages();
+        }
+        catch (Exception e) {
+            Logger.LogError(e.getMessage());
         }
     }
 

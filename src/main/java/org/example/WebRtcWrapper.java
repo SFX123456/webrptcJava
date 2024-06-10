@@ -120,19 +120,17 @@ public class WebRtcWrapper {
         this.peerConnectionFactory = new PeerConnectionFactory();
         this.rtcConfiguration = getRtcConfiguration();
         this.rtcPeerConnection = getRtcPeerConnection();
-        if (shouldCreateDataChannel) 
-            setUpDataChannel();
+
+        setUpDataChannel("videoandtranscription");
         setUpDataToTransport();
-        
         
         System.out.println("WebRtcWrapper initiated");
        
     }
-    public void setUpDataChannel()
+    public void setUpDataChannel(String channelName)
     {
-
         System.out.println("setting up datachannel");
-        RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel("sendDataChannel" + webRtcClient.getID(), new RTCDataChannelInit());
+        RTCDataChannel dataChannel = rtcPeerConnection.createDataChannel(channelName, new RTCDataChannelInit());
         webRtcClient.OnNewDataChannel(dataChannel, userResponsibleFor); 
     } 
     
