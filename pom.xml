@@ -11,6 +11,8 @@
   <url>http://maven.apache.org</url>
 
   <properties>
+    <maven.compiler.source>22</maven.compiler.source>
+    <maven.compiler.target>22</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -31,6 +33,11 @@
       <artifactId>webrtc-java</artifactId>
       <version>0.8.0</version>
   </dependency>
+    <dependency>
+      <groupId>io.github.givimad</groupId>
+      <artifactId>whisper-jni</artifactId>
+      <version>1.5.4-0</version>
+    </dependency>
     <dependency>
       <groupId>com.github.sarxos</groupId>
       <artifactId>webcam-capture</artifactId>
