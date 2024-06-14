@@ -14,17 +14,9 @@ import org.bytedeco.opencv.global.opencv_imgcodecs;
 import org.bytedeco.opencv.opencv_core.IplImage;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.imgcodecs.Imgcodecs;
-
-
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.Buffer;
-import java.util.HashMap;
 
 public class App 
 {

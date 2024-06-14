@@ -35,6 +35,7 @@ public class VideoSender {
     }
      public void sendMessages()
      {
+         
          Thread t = new Thread(() ->  {
             try{
                  runLoop();
@@ -47,8 +48,6 @@ public class VideoSender {
      }
     
     private void runLoop() throws Exception {
-
-        //OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(1);
         List<Webcam> webcams = Webcam.getWebcams();
 
         if (webcams.isEmpty()) {
@@ -60,37 +59,26 @@ public class VideoSender {
         }
         Webcam webcam = webcams.get(0);
         webcam.open();
-       
-       
-            while (true) {
 
-                BufferedImage image = webcam.getImage();
-                // Convert BufferedImage to byte array
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(image, "jpg", baos);
-                byte[] imageBytes = baos.toByteArray();
-               synchronized (lock) {
-                   sendMessage(imageBytes);
-               }
-                videoViewer.OnNewVideoFrame(imageBytes);
 
-                try {
-                    Thread.sleep(33);
-                } catch (InterruptedException e) {
-                    Logger.LogMessage("error with thread: " + e.getMessage());
-                }
+        while (true) {
+            BufferedImage image = webcam.getImage();
+            // Convert BufferedImage to byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", baos);
+            byte[] imageBytes = baos.toByteArray();
+            synchronized (lock) {
+                sendMessage(imageBytes);
             }
-        
-       
+            videoViewer.OnNewVideoFrame(imageBytes);
 
+            try {
+                Thread.sleep(33);
+            } catch (InterruptedException e) {
+                Logger.LogMessage("error with thread: " + e.getMessage());
+            }
+        }
     }
-
-    private static void byteArrayToImage(byte[] imageBytes, String filePath) throws IOException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
-        BufferedImage image = ImageIO.read(bais);
-        ImageIO.write(image, "jpg", new File(filePath));
-    }
-    
     
     public void sendMessage(byte[] bytes) throws Exception {
         ByteBuffer sendBuffer = ByteBuffer.allocate(bytes.length);

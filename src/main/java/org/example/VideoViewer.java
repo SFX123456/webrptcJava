@@ -13,7 +13,6 @@ import java.io.IOException;
 public class VideoViewer {
   private CanvasFrame canvas;
     private Java2DFrameConverter converter;
-    public boolean saved = false;
     public VideoViewer() {
         canvas = new CanvasFrame("Webcam");
         canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
