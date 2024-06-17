@@ -6,6 +6,7 @@ public class WebRtcCallController {
     {
         if (isInActiveCall())
         {
+            Logger.LogMessage("failed because theres already an open connection");
             throw new Exception("Already active call");
         }
         webRtcController= new WebRtcController(id, roomName);
