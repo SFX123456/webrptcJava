@@ -31,13 +31,14 @@ public class WebRtcController implements WebRtcClient {
     public int myId;
     public ArrayList<WebRtcDataChannelHandler> webRtcDataChannelHandlers = new ArrayList<>();
     final public int MAXROOMSIZE = 5;
-    final public String ROOMNAME = "helloworld";
+    public String roomName = "";
     private static Object object = new Object();
     private VideoSender videoSender;
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     private TranscriptionSender transcriptionSender;
-    public WebRtcController(int id) throws URISyntaxException, IOException {
+    public WebRtcController(int id, string roomName) throws URISyntaxException, IOException {
         myId = id;
+        this.roomName = roomName;
         webSocketClient = connectToWebSocketServer();
         messageSender = new MessageSender(webSocketClient);
         
