@@ -23,7 +23,7 @@ public class App
     public static void main( String[] args ) throws IOException, URISyntaxException, InterruptedException {
         
         int myId = Integer.parseInt(args[0]);
-        new WebRtcController(myId);
+        new WebRtcController(myId, "hello world");
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         String line = bufferedReader.readLine();
         System.out.println(line);
