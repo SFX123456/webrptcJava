@@ -1,14 +1,4 @@
 package org.example;
-
-
-
-
-
-
-
-
-
-
 import org.bytedeco.javacv.*;
 import org.bytedeco.opencv.global.opencv_imgcodecs;
 import org.bytedeco.opencv.opencv_core.IplImage;
@@ -29,6 +19,4 @@ public class App
         System.out.println(line);
        
     }
-
-  
 }
