@@ -5,6 +5,7 @@ import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.RTCIceCandidate;
 import dev.onvoid.webrtc.media.video.VideoFrame;
 import org.bytedeco.javacv.FrameFilter;
+import org.bytedeco.opencv.presets.opencv_core;
 import org.example.bean.EventData;
 import org.example.bean.RoomInfo;
 import org.example.bean.UserBean;
@@ -36,7 +37,7 @@ public class WebRtcController implements WebRtcClient {
     private VideoSender videoSender;
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     private TranscriptionSender transcriptionSender;
-    public WebRtcController(int id, string roomName) throws URISyntaxException, IOException {
+    public WebRtcController(int id, String roomName) throws URISyntaxException, IOException {
         myId = id;
         this.roomName = roomName;
         webSocketClient = connectToWebSocketServer();
@@ -91,7 +92,7 @@ public class WebRtcController implements WebRtcClient {
     @Override
     public void OnConnectedToServer() throws IOException {
         System.out.println("Successfully connected to Websocketserver creating lobby");
-        messageSender.joinRoom(ROOMNAME);
+        messageSender.joinRoom(roomName);
     }
     
     
