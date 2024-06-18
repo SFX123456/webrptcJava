@@ -1,6 +1,8 @@
 package org.example;
 
 import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamEvent;
+import com.github.sarxos.webcam.WebcamListener;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.media.video.VideoCapture;
@@ -15,12 +17,12 @@ import org.bytedeco.opencv.presets.opencv_core;
 import javax.imageio.ImageIO;
 import javax.xml.stream.FactoryConfigurationError;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,14 +30,16 @@ public class VideoSender {
     public RTCDataChannel rtcDataChannel;
     public VideoViewer videoViewer;
     private Object lock;
+    private BufferedImage bufferedImage;
     public VideoSender(RTCDataChannel rtcDataChannel, Object lock) throws IOException {
         this.rtcDataChannel = rtcDataChannel;
-        this.videoViewer = new VideoViewer();
+        //this.videoViewer = new VideoViewer();
         this.lock = lock;
     }
      public void sendMessages()
      {
          
+        Logger.LogMessage("sending images");
          Thread t = new Thread(() ->  {
             try{
                  runLoop();
@@ -48,35 +52,55 @@ public class VideoSender {
      }
     
     private void runLoop() throws Exception {
-        List<Webcam> webcams = Webcam.getWebcams();
+        try {
+            // Start the JAR process
+            ProcessBuilder builder = new ProcessBuilder("java", "-jar", "C:\\Users\\woelflenico\\IdeaProjects\\WebcamRecorder\\target\\WebcamRecorder-1.0-SNAPSHOT.jar");
+            builder.redirectErrorStream(true); // Redirect stderr to stdout
+            Process process = builder.start();
 
-        if (webcams.isEmpty()) {
-            System.out.println("No webcams found.");
-        } else {
-            for (int i = 0; i < webcams.size(); i++) {
-                System.out.println("Webcam " + i + ": " + webcams.get(i).getName());
+            // Read output from the process
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+
+            // Counter for image file names
+            int imageCount = 0;
+
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+                // Decode Base64 string to image bytes
+                byte[] imageBytes = new byte[3];
+                try {
+
+                    imageBytes = Base64.getDecoder().decode(line);
+                    synchronized (lock) {
+                        sendMessage(imageBytes);
+                    }
+                }
+                catch (Exception e) {
+                    System.out.println("überspringe line " + line);
+                }
+                // Write image bytes to file
+                /*
+                String fileName = "image_" + imageCount + ".jpg";
+                Files.write(Paths.get(fileName), imageBytes);
+                System.out.println("Saved image: " + fileName);
+*/
+                // Increment image counter
+                imageCount++;
+
+                // You can add further logic or conditions for stopping the process
+                // For example, process.destroy() or break; if certain conditions are met
             }
-        }
-        Webcam webcam = webcams.get(0);
-        webcam.open();
 
+            // Close the reader and wait for the process to exit
+            reader.close();
+            process.waitFor();
 
-        while (true) {
-            BufferedImage image = webcam.getImage();
-            // Convert BufferedImage to byte array
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "jpg", baos);
-            byte[] imageBytes = baos.toByteArray();
-            synchronized (lock) {
-                sendMessage(imageBytes);
-            }
-            videoViewer.OnNewVideoFrame(imageBytes);
+            // Print exit value
+            System.out.println("Process exited with code " + process.exitValue());
 
-            try {
-                Thread.sleep(33);
-            } catch (InterruptedException e) {
-                Logger.LogMessage("error with thread: " + e.getMessage());
-            }
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
         }
     }
     

@@ -26,15 +26,7 @@ public class TranscriptionSender {
     private RTCDataChannel rtcDataChannel;
     private TranscriptionViewer transcriptionViewer;
     private Object lock;
-    private WhisperContext ctx ;
-    private WhisperFullParams params ;
-    private WhisperJNI whisperJNI;
-    private DataLine.Info dataLineInfo;
-    private final static int SAMPLESARRAYSIZE = 1000000;
-    private final static int SIZEBYTESSAMPLE = 2;
-    private final static int SIZESAMPLES = 16000 * 10;
-    private final static long TIMECYCLEAUDIOPROCESSING = 30000;
-    private String totalRecorded;
+   private String totalRecorded;
     public TranscriptionSender(RTCDataChannel rtcDataChannel, Object lock) throws IOException {
         this.rtcDataChannel = rtcDataChannel;
         this.transcriptionViewer = new TranscriptionViewer();
@@ -43,6 +35,7 @@ public class TranscriptionSender {
     }
 
     public void sendMessages() {
+        /*
         Thread t = new Thread(() -> {
             try 
             {
@@ -53,6 +46,10 @@ public class TranscriptionSender {
             }
         });
         t.start();
+        
+         */
+       
+         
     }
 
     private void runLoop() throws Exception {

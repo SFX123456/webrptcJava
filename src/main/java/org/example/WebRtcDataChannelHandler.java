@@ -19,7 +19,7 @@ public class WebRtcDataChannelHandler {
     private final Object lock = new Object();
 
     public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel, WebRtcClient webRtcClient, String foreignID) {
-        this.videoViewer = new VideoViewer();
+        //this.videoViewer = new VideoViewer();
         this.foreignID = foreignID;
         this.rtcDataChannel = rtcDataChannel;
         this.webRtcClient = webRtcClient;
@@ -67,6 +67,9 @@ public class WebRtcDataChannelHandler {
                 buffer.get(bytes);
 
                 if (isJPEG(bytes)) {
+                    if (videoViewer == null) {
+                        videoViewer = new VideoViewer();
+                    }
                     Logger.LogMessage("it is an jpeg");
                     videoViewer.OnNewVideoFrame(bytes);
                     buffer.clear();
