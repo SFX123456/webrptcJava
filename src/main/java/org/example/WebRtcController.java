@@ -182,6 +182,7 @@ public class WebRtcController implements WebRtcClient {
         Logger.LogMessage("setting up transcription");
         if (myId != 5) return;
         try {
+            rtcDataChannel.send(new RTCDataChannelBuffer(ByteBuffer.wrap("hallo".getBytes(StandardCharsets.UTF_8)),false));
             transcriptionSender = new TranscriptionSender(rtcDataChannel,lock);
             transcriptionSender.sendMessages();
         }
