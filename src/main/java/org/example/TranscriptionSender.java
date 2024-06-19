@@ -43,6 +43,7 @@ public class TranscriptionSender {
     }
 
     public void sendMessages() {
+        /*
         Thread t = new Thread(() -> {
             try 
             {
@@ -53,6 +54,8 @@ public class TranscriptionSender {
             }
         });
         t.start();
+        
+         */
     }
 
     private void runLoop() throws Exception {

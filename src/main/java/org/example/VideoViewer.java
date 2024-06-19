@@ -4,36 +4,64 @@ import org.bytedeco.javacv.CanvasFrame;
 import org.bytedeco.javacv.Java2DFrameConverter;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
-public class VideoViewer {
-  private CanvasFrame canvas;
-    private Java2DFrameConverter converter;
+public class VideoViewer extends JPanel {
+    private JFrame frame;
+    private JLabel label;
+    private BufferedImage bufferedImage; 
     public VideoViewer() {
-        canvas = new CanvasFrame("Webcam");
-        canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+        frame = new JFrame("BufferedImage Display");
+      
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
 
-
-        converter = new Java2DFrameConverter();
+        // Create an instance of BufferedImageDisplay
+        frame.add(this);
+        
+        // Display the frame
+        frame.setVisible(true);
+      
     }
 
-    public void OnNewVideoFrame(byte[] bytes) {
-        try {
-    
-            BufferedImage imageFromBytes = byteArrayToBufferedImage(bytes);
-            
-            canvas.showImage(converter.convert(imageFromBytes));
-        } catch (Exception e) {
-            Logger.LogError(e.getMessage());
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (bufferedImage != null) {
+            // Draw the image
+            g.drawImage(bufferedImage, 0, 0, this);
         }
     }
 
-    private static BufferedImage byteArrayToBufferedImage(byte[] imageBytes) throws IOException {
+    protected void OnNewVideoFrame(byte[] bytes)
+    {
+        
+        try {
+            bufferedImage = byteArrayToBufferedImage(bytes);
+            repaint();
+        } catch (IOException e) {
+           System.out.println(e.getMessage()); 
+        }
+    }
+
+    protected void OnNewVideoFrame2(BufferedImage image)
+    {
+        bufferedImage = image;
+        repaint();
+    }
+
+    public static BufferedImage byteArrayToBufferedImage(byte[] imageBytes) throws IOException {
         ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
-        return ImageIO.read(bais);
+        
+        var t = ImageIO.read(bais);
+        
+        bais.close();
+        
+        return t;
     }
 }

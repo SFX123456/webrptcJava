@@ -1,27 +1,38 @@
 package org.example;
 
 import dev.onvoid.webrtc.*;
+import dev.onvoid.webrtc.media.FourCC;
 import dev.onvoid.webrtc.media.MediaStream;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
 import dev.onvoid.webrtc.media.MediaStreamTrackEndedListener;
 import dev.onvoid.webrtc.media.audio.AudioPlayer;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.audio.AudioTrackSink;
-import dev.onvoid.webrtc.media.video.VideoFrame;
-import dev.onvoid.webrtc.media.video.VideoTrack;
-import dev.onvoid.webrtc.media.video.VideoTrackSink;
+import dev.onvoid.webrtc.media.video.*;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelBuffer;
+import javafx.scene.image.WritableImage;
+import javafx.scene.image.WritablePixelFormat;
 import org.java_websocket.handshake.ClientHandshake;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+
+import static java.util.Objects.isNull;
 
 public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
     public WebRtcClient webRtcClient;
     private String foreignID = null;
+    private VideoViewer videoViewer;
+    private boolean first = true;
+    private ImageView imageView;
 
     public WebRtcPeerConnectionHandler(WebRtcClient webRtcClient, String foreignID) {
         this.foreignID = foreignID;
@@ -30,6 +41,11 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
     private AudioPlayer audioPlayer;
     private boolean sendInitialMessage = false;
+
+    private PixelBuffer<ByteBuffer> pixelBuffer;
+
+    private ByteBuffer byteBuffer;
+    private Integer integ = 0;
 
     @Override
     public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
@@ -46,7 +62,9 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         MediaStreamTrack typ = transceiver.getReceiver().getTrack();
         System.out.println(typ.getKind());
         if (typ.getKind().equals(MediaStreamTrack.VIDEO_TRACK_KIND)) {
+            videoViewer = new VideoViewer();
             System.out.println("is videotrackl");
+            if (webRtcClient.getID() == 5) return;
             VideoTrack videoTrack1 = (VideoTrack) typ;
             typ.addTrackEndedListener(new MediaStreamTrackEndedListener() {
                 @Override
@@ -54,23 +72,76 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
                     System.out.println("video ended");
                 }
             });
-            Thread thread = new Thread((Runnable) () -> {
-                while (true) {
+          
+            
 
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    System.out.printf("video current state: " + typ.getState());
-                }
-
-            });
-            thread.start();
             videoTrack1.addSink(new VideoTrackSink() {
                 @Override
                 public void onVideoFrame(VideoFrame videoFrame) {
-                    System.out.println("new videoframe received");
+                    System.out.println("new videoframe");
+                    if (!first) return;
+                    integ++;
+                    //first = false;
+                    VideoFrameBuffer buffer = videoFrame.buffer;
+                    int width = buffer.getWidth();
+                    int height = buffer.getHeight();
+
+                    
+                    var bytes = new byte[width * height * 4];
+                    byteBuffer = ByteBuffer.wrap(bytes);
+                        
+                    System.out.println("help 1");
+
+                    try {
+                        VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
+                        System.out.println("help 2");
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    int[] argbPixels = new int[width * height];
+                    for (int i = 0; i < argbPixels.length; i++) {
+                        int b = bytes[i * 4] & 0xFF;
+                        int g = bytes[i * 4 + 1] & 0xFF;
+                        int r = bytes[i * 4 + 2] & 0xFF;
+                        int a = bytes[i * 4 + 3] & 0xFF;
+                        argbPixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
+                    }
+                    System.out.println("help 3");
+
+                    try {
+                        
+                        // Create BufferedImage and set pixel data
+                        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                        DataBufferInt bufferInt = (DataBufferInt) image.getRaster().getDataBuffer();
+                        int[] pixels = bufferInt.getData();
+                        System.arraycopy(argbPixels, 0, pixels, 0, argbPixels.length);
+
+                        // Write BufferedImage to PNG file
+                        File outputFile = new File("E:\\untitled1\\" + integ + "output.png");
+                        
+                        System.out.println("help 5");
+                        ImageIO.write(image, "PNG", outputFile);
+                        
+                        // Convert BufferedImage to byte array
+                        var baos = new ByteArrayOutputStream();
+                        //ImageIO.write(image, "png", baos);
+                        //byte[] imageBytes = baos.toByteArray();
+                        //videoViewer.OnNewVideoFrame(imageBytes);
+                        baos.close();
+                        System.out.println("PNG image saved successfully.");
+                        image.flush();
+                        buffer.release();
+
+                    } catch (IOException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+
+                    System.out.println("help 6");
+                   
+                    
                 }
             });
         } else {
@@ -89,6 +160,20 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
 
         }
+    }
+    private static int[] byteArrayToIntArray(byte[] bytes) {
+        int[] result = new int[bytes.length / 4];
+        for (int i = 0; i < result.length; i++) {
+            int b0 = bytes[i * 4] & 0xFF;
+            int b1 = bytes[i * 4 + 1] & 0xFF;
+            int b2 = bytes[i * 4 + 2] & 0xFF;
+            int b3 = bytes[i * 4 + 3] & 0xFF;
+            result[i] = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+        }
+        return result;
+    }
+    private static int clamp(int value) {
+        return Math.min(Math.max(value, 0), 255);
     }
 
     @Override

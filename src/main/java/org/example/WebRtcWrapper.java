@@ -30,6 +30,8 @@ public class WebRtcWrapper {
    public WebRtcDataChannelHandler webRtcDataChannelHandler;
    public boolean sentInitializeMethod = false;
    public String userResponsibleFor = null;
+    private VideoDeviceSource videoSource;
+    private VideoTrack videoTrack;
     
     private OwnAudio getOwnAudio() {
         AudioOptions audioOptions = new AudioOptions();
@@ -123,6 +125,15 @@ public class WebRtcWrapper {
 
         setUpDataChannel("videoandtranscription");
         setUpDataToTransport();
+
+        videoSource = new VideoDeviceSource();
+        VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
+        videoSource.setVideoCaptureDevice(device);
+        videoSource.setVideoCaptureCapability(MediaDevices.getVideoCaptureCapabilities(device).get(0)); //I believe index 0 is auto-resolution, 17 is 1280x720 @ 10fps
+        videoSource.start();
+        videoTrack = peerConnectionFactory.createVideoTrack("CAM", videoSource);
+
+        rtcPeerConnection.addTrack(videoTrack, List.of("stream"));
         
         System.out.println("WebRtcWrapper initiated");
        

@@ -174,6 +174,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
             userOffer.put(sendbackto,map);
             return;
         }
+        Logger.LogMessage("got second offer");
         Map oldmap = userOffer.get(sendbackto);
         String sdp = (String) oldmap.get("data");
         sdp+= (String) map.get("data");
