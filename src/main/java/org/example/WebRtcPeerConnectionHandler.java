@@ -23,6 +23,8 @@ import java.awt.image.DataBufferInt;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.isNull;
 
@@ -33,10 +35,12 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     private VideoViewer videoViewer;
     private boolean first = true;
     private ImageView imageView;
+    private ArrayList<VideoFrameBuffer> videoFrames;
 
     public WebRtcPeerConnectionHandler(WebRtcClient webRtcClient, String foreignID) {
         this.foreignID = foreignID;
         this.webRtcClient = webRtcClient;
+        videoFrames = new ArrayList<>();
     }
 
     private AudioPlayer audioPlayer;
@@ -46,6 +50,14 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
     private ByteBuffer byteBuffer;
     private Integer integ = 0;
+    private static Object lock = new Object();
+    private Integer lastHeight = null;
+    private Integer lastWidth = null;
+    private int[] argPixel;
+    private ByteArrayOutputStream byteArrayOutputStream;
+    private BufferedImage bufferedImage;
+    private int[] pixels;
+    private DataBufferInt bufferInt;
 
     @Override
     public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
@@ -72,8 +84,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
                     System.out.println("video ended");
                 }
             });
-          
-            
+
 
             videoTrack1.addSink(new VideoTrackSink() {
                 @Override
@@ -81,67 +92,11 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
                     System.out.println("new videoframe");
                     if (!first) return;
                     integ++;
+                    if (integ % 2 != 0) return;
                     //first = false;
                     VideoFrameBuffer buffer = videoFrame.buffer;
-                    int width = buffer.getWidth();
-                    int height = buffer.getHeight();
-
-                    
-                    var bytes = new byte[width * height * 4];
-                    byteBuffer = ByteBuffer.wrap(bytes);
-                        
-                    System.out.println("help 1");
-
-                    try {
-                        VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
-                        System.out.println("help 2");
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    int[] argbPixels = new int[width * height];
-                    for (int i = 0; i < argbPixels.length; i++) {
-                        int b = bytes[i * 4] & 0xFF;
-                        int g = bytes[i * 4 + 1] & 0xFF;
-                        int r = bytes[i * 4 + 2] & 0xFF;
-                        int a = bytes[i * 4 + 3] & 0xFF;
-                        argbPixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
-                    }
-                    System.out.println("help 3");
-
-                    try {
-                        
-                        // Create BufferedImage and set pixel data
-                        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                        DataBufferInt bufferInt = (DataBufferInt) image.getRaster().getDataBuffer();
-                        int[] pixels = bufferInt.getData();
-                        System.arraycopy(argbPixels, 0, pixels, 0, argbPixels.length);
-
-                        // Write BufferedImage to PNG file
-                        File outputFile = new File("E:\\untitled1\\" + integ + "output.png");
-                        
-                        System.out.println("help 5");
-                        ImageIO.write(image, "PNG", outputFile);
-                        
-                        // Convert BufferedImage to byte array
-                        var baos = new ByteArrayOutputStream();
-                        //ImageIO.write(image, "png", baos);
-                        //byte[] imageBytes = baos.toByteArray();
-                        //videoViewer.OnNewVideoFrame(imageBytes);
-                        baos.close();
-                        System.out.println("PNG image saved successfully.");
-                        image.flush();
-                        buffer.release();
-
-                    } catch (IOException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
-                    }
-
-                    System.out.println("help 6");
-                   
-                    
+                    videoFrames.add(buffer);
+                    dealWithFrame(buffer);
                 }
             });
         } else {
@@ -161,6 +116,71 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
         }
     }
+
+
+    private CompletableFuture<Boolean> dealWithFrame(VideoFrameBuffer buffer) {
+        int width = buffer.getWidth();
+        int height = buffer.getHeight();
+        System.out.println("width " + width);
+        System.out.println("heuight " + height);
+        if (byteBuffer == null || width != lastWidth || height != lastHeight) {
+            lastWidth = width;
+            lastHeight = height;
+            byteBuffer = ByteBuffer.wrap(new byte[width * height * 4]);
+            argPixel = new int[width * height];
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            bufferInt = (DataBufferInt) bufferedImage.getRaster().getDataBuffer();
+            pixels = bufferInt.getData();
+        }
+
+
+        try {
+            VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
+            System.out.println("help 2");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        for (int i = 0; i < argPixel.length; i++) {
+            int b = byteBuffer.get(i * 4) & 0xFF;
+            int g = byteBuffer.get(i * 4 + 1) & 0xFF;
+            int r = byteBuffer.get(i * 4 + 2) & 0xFF;
+            int a = byteBuffer.get(i * 4 + 3) & 0xFF;
+            argPixel[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        System.out.println("help 3");
+
+        System.arraycopy(argPixel, 0, pixels, 0, argPixel.length);
+
+        try {
+            // Reset the ByteArrayOutputStream for reuse
+            //byteArrayOutputStream.reset();
+
+            // Write BufferedImage to ByteArrayOutputStream as PNG
+            //ImageIO.write(bufferedImage, "png", byteArrayOutputStream);
+            //byte[] imageBytes = byteArrayOutputStream.toByteArray();
+
+            // Pass the byte array to the video viewer
+            videoViewer.OnNewVideoFrame2(bufferedImage);
+
+            // Optionally flush the stream (though reset() clears it)
+            //byteArrayOutputStream.flush();
+
+            System.out.println("PNG image saved successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("help 6");
+
+
+        return CompletableFuture.supplyAsync(() -> true);
+
+
+    }
+
     private static int[] byteArrayToIntArray(byte[] bytes) {
         int[] result = new int[bytes.length / 4];
         for (int i = 0; i < result.length; i++) {
@@ -172,6 +192,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         }
         return result;
     }
+
     private static int clamp(int value) {
         return Math.min(Math.max(value, 0), 255);
     }
