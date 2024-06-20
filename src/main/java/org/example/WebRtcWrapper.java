@@ -125,7 +125,7 @@ public class WebRtcWrapper {
 
         setUpDataChannel("videoandtranscription");
         setUpDataToTransport();
-
+/*
         videoSource = new VideoDeviceSource();
         VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
         videoSource.setVideoCaptureDevice(device);
@@ -135,6 +135,8 @@ public class WebRtcWrapper {
 
         rtcPeerConnection.addTrack(videoTrack, List.of("stream"));
         
+        
+ */
         System.out.println("WebRtcWrapper initiated");
        
     }

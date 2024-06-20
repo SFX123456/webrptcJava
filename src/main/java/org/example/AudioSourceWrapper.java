@@ -10,6 +10,7 @@ import javax.sound.sampled.SourceDataLine;
 
 public class AudioSourceWrapper implements AudioSource {
     public static SourceDataLine line = null;
+    
     @Override
     public int onPlaybackData(byte[] bytes, int i, int i1, int i2, int i3) {
           

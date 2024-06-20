@@ -44,7 +44,7 @@ public class WebRtcController implements WebRtcClient {
         messageSender = new MessageSender(webSocketClient);
         
         try {
-            setUpAudio();
+            //setUpAudio();
         }
         catch (Exception e) {
             System.out.println("Unable to identify audio output");
@@ -156,24 +156,13 @@ public class WebRtcController implements WebRtcClient {
          
     }
 
-    public void OnNewAudio(byte[] audioData) {
-        //System.out.println("new audio");
+    public void OnNewAudio(byte[] audioData, int bitsPerSample, int sampleRate, int channels) {
         if (myId != 5) return;
-       
-        line.write(audioData, 0, audioData.length);
-    }
 
-    @Override
-    public void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel, Object lock) {
         try {
-            Logger.LogMessage("setting up video");
-            if (myId != 5) return;
-            //condition need to change
-            this.videoSender = new VideoSender(rtcDataChannel,lock);
-            videoSender.sendMessages();
-        }
-        catch (Exception e) {
-            Logger.LogError("Error with video" + e.getMessage());
+            AudioOutput.GetAudioOutput(bitsPerSample,sampleRate,channels).OnNewAudioData(audioData);
+        } catch (LineUnavailableException e) {
+            Logger.LogError("no output line available");
         }
     }
 

@@ -89,11 +89,6 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             videoTrack1.addSink(new VideoTrackSink() {
                 @Override
                 public void onVideoFrame(VideoFrame videoFrame) {
-                    System.out.println("new videoframe");
-                    if (!first) return;
-                    integ++;
-                    if (integ % 2 != 0) return;
-                    //first = false;
                     VideoFrameBuffer buffer = videoFrame.buffer;
                     videoFrames.add(buffer);
                     dealWithFrame(buffer);
@@ -105,11 +100,17 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             AudioTrack audioTrack1 = (AudioTrack) typ;
 
             audioTrack1.addSink(new AudioTrackSink() {
+                
                 @Override
-                public void onData(byte[] bytes, int i, int i1, int i2, int i3) {
-                    //System.out.println("got audio data");
-                    //System.out.println(bytes.length);
-                    webRtcClient.OnNewAudio(bytes);
+                public void onData(byte[] data, int bitsPerSample, int sampleRate, int channels, int frames) {
+                    
+                    System.out.println("got audio data");
+                    System.out.println(bitsPerSample);
+                    System.out.println(sampleRate);
+                    System.out.println(channels);
+                    System.out.println(frames);
+                    System.out.println(data.length);
+                    webRtcClient.OnNewAudio(data, bitsPerSample,sampleRate,channels);
                 }
             });
 
@@ -121,8 +122,6 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     private CompletableFuture<Boolean> dealWithFrame(VideoFrameBuffer buffer) {
         int width = buffer.getWidth();
         int height = buffer.getHeight();
-        System.out.println("width " + width);
-        System.out.println("heuight " + height);
         if (byteBuffer == null || width != lastWidth || height != lastHeight) {
             lastWidth = width;
             lastHeight = height;
@@ -137,7 +136,6 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
         try {
             VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
-            System.out.println("help 2");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -150,7 +148,6 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             int a = byteBuffer.get(i * 4 + 3) & 0xFF;
             argPixel[i] = (a << 24) | (r << 16) | (g << 8) | b;
         }
-        System.out.println("help 3");
 
         System.arraycopy(argPixel, 0, pixels, 0, argPixel.length);
 
@@ -168,12 +165,10 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             // Optionally flush the stream (though reset() clears it)
             //byteArrayOutputStream.flush();
 
-            System.out.println("PNG image saved successfully.");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        System.out.println("help 6");
 
 
         return CompletableFuture.supplyAsync(() -> true);

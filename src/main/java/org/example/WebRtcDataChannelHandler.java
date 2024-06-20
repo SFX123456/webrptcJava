@@ -44,7 +44,7 @@ public class WebRtcDataChannelHandler {
                 //webRtcClient.OnNewBroadcastMessageRequested("Hallo welt");
                 Logger.LogMessage("should send video messages niow");
 
-                webRtcClient.OnDataChannelForVideoReady(rtcDataChannel, lock);
+                //webRtcClient.OnDataChannelForVideoReady(rtcDataChannel, lock);
                 
                 webRtcClient.OnDataChannelForTextReady(rtcDataChannel, lock);
 

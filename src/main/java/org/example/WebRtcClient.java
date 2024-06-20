@@ -11,31 +11,30 @@ import java.io.IOException;
 
 
 public interface WebRtcClient {
-    public int getID();
-    public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate, String sender);
+    int getID();
+    void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate, String sender);
 
-    public void OnConnectedToServer() throws IOException;
+    void OnConnectedToServer() throws IOException;
 
-    public void OnGotOffer(String sdp, String type , String userID);
+    void OnGotOffer(String sdp, String type , String userID);
 
-    public void OnNewBroadcastMessageRequested(String message);
+    void OnNewBroadcastMessageRequested(String message);
     
-    public void OnGotAnswer(String sdp, String type , String userID, String sender);
-    public void OnHandledAccept(String userID);
+    void OnGotAnswer(String sdp, String type , String userID, String sender);
+    void OnHandledAccept(String userID);
     
-    public void OnNewAudio(byte[] audioData);
-    void OnDataChannelForVideoReady(RTCDataChannel rtcDataChannel, Object lock);
+    void OnNewAudio(byte[] audioData, int bitsPerSample, int sampleRate, int channels);
     void OnDataChannelForTextReady(RTCDataChannel rtcDataChannel, Object lock);
-    public void OnSendAnswer(String sdp, String type, String id);
+    void OnSendAnswer(String sdp, String type, String id);
 
-    public void OnNewOwnIceCandidate(String sdp, String sdpMid, int sdpMLineIndex);
+    void OnNewOwnIceCandidate(String sdp, String sdpMid, int sdpMLineIndex);
 
-    public void OnSuccessfullyCreatedOffer(String sdp, String type, String userID);
+    void OnSuccessfullyCreatedOffer(String sdp, String type, String userID);
 
-    public void OnNewDataChannel(RTCDataChannel rtcDataChannel, String foreignID);
-    public void OnConnectedToRoom(RoomInfo roomInfo);
-    public void OnSomeoneNewJoined(UserBean userBean);
-    public void SentInitializeMessage(String foreignID);
-    public boolean DidSendInitializeMethod(String foreignID);
+    void OnNewDataChannel(RTCDataChannel rtcDataChannel, String foreignID);
+    void OnConnectedToRoom(RoomInfo roomInfo);
+    void OnSomeoneNewJoined(UserBean userBean);
+    void SentInitializeMessage(String foreignID);
+    boolean DidSendInitializeMethod(String foreignID);
     
 }
