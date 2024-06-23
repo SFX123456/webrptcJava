@@ -7,3 +7,4 @@ edit configuration und zwei mal einrichten. Einmal mit 5 als Argument einmal mit
 Websocketserver https://github.com/SFX123456/websocketserver clonen und starten
 
 Webrtc Applikation mit argument 5 starten und danach die Applikation mit Argument 3
+Aktuell wird als Transkriptionmodell ein Model genutzt das lediglich Englisch versteht.
