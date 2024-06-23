@@ -18,8 +18,6 @@ public interface WebRtcClient {
 
     void OnGotOffer(String sdp, String type , String userID);
 
-    void OnNewBroadcastMessageRequested(String message);
-    
     void OnGotAnswer(String sdp, String type , String userID, String sender);
     void OnHandledAccept(String userID);
     

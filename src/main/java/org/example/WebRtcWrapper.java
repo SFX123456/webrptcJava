@@ -39,8 +39,7 @@ public class WebRtcWrapper {
         AudioTrackSource audioTrackSource = peerConnectionFactory.createAudioSource(audioOptions);
         
         AudioTrack audioTrack =  peerConnectionFactory.createAudioTrack("audio",audioTrackSource);
-      //  AudioDevice audioDevice = MediaDevices.getDefaultAudioRenderDevice();
-        
+    
         ArrayList<String> g = new ArrayList<>();
         g.add("audio");
         return new OwnAudio(audioTrack, g);
@@ -60,28 +59,25 @@ public class WebRtcWrapper {
     }
     public void startOfferSending(String userID)
     {
-        System.out.println("sending offer");
+        Logger.LogMessage("sending offer");
         sendOffer(userID);
     }
     public void handleNewAccept(String sdp, String type, String id)
     {
-        System.out.println("handlenew accept");
+        Logger.LogMessage("handle new accept");
         RTCSessionDescription rtcSessionDescription = new RTCSessionDescription(stringRTCSdpTypeHashMap.get(type), sdp);
         System.out.println(rtcPeerConnection.getConnectionState());
         rtcPeerConnection.setRemoteDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
             
             @Override
             public void onSuccess() {
-                System.out.println("client A set Remote desc");
+                Logger.LogMessage("client A set Remote desc");
                 webRtcClient.OnHandledAccept(id);
             }
 
             @Override
             public void onFailure(String s) {
-
-                System.out.println("could not set remote desc");
-                System.out.println(s);
-                System.out.println("sdp " + sdp);
+                Logger.LogError("could not set remote desc " + s + "sdp: " + sdp);
             }
         });
     }
@@ -91,11 +87,10 @@ public class WebRtcWrapper {
         rtcPeerConnection.createOffer(rtcOfferOptions, new CreateSessionDescriptionObserver() {
             @Override
             public void onSuccess(RTCSessionDescription rtcSessionDescription) {
-                System.out.println("was suiccs");
                 rtcPeerConnection.setLocalDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
                     @Override
                     public void onSuccess() {
-                        System.out.println("successfully set local desc");
+                        Logger.LogMessage("successfully set local desc");
                         webRtcClient.OnSuccessfullyCreatedOffer(rtcSessionDescription.sdp,rtcSessionDescription.sdpType.name(), userId );
                     }
 
@@ -124,19 +119,9 @@ public class WebRtcWrapper {
         this.rtcPeerConnection = getRtcPeerConnection();
 
         setUpDataChannel("videoandtranscription");
+        
         setUpDataToTransport();
-/*
-        videoSource = new VideoDeviceSource();
-        VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
-        videoSource.setVideoCaptureDevice(device);
-        videoSource.setVideoCaptureCapability(MediaDevices.getVideoCaptureCapabilities(device).get(0)); //I believe index 0 is auto-resolution, 17 is 1280x720 @ 10fps
-        videoSource.start();
-        videoTrack = peerConnectionFactory.createVideoTrack("CAM", videoSource);
 
-        rtcPeerConnection.addTrack(videoTrack, List.of("stream"));
-        
-        
- */
         System.out.println("WebRtcWrapper initiated");
        
     }
@@ -151,12 +136,17 @@ public class WebRtcWrapper {
     
     public void setUpDataToTransport()
     {
-        System.out.println("requested audio");
         ownAudio = getOwnAudio();
         rtcPeerConnection.addTrack(ownAudio.audioTrack, ownAudio.list);
         rtcRtpTransceiver = rtcPeerConnection.addTransceiver(ownAudio.audioTrack, new RTCRtpTransceiverInit());
-        System.out.println("set audio track");
-       
+        Logger.LogMessage("set audio track");
+        videoSource = new VideoDeviceSource();
+        VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
+        videoSource.setVideoCaptureDevice(device);
+        videoSource.setVideoCaptureCapability(MediaDevices.getVideoCaptureCapabilities(device).get(0)); //I believe index 0 is auto-resolution, 17 is 1280x720 @ 10fps
+        videoSource.start();
+        videoTrack = peerConnectionFactory.createVideoTrack("CAM", videoSource);
+        rtcPeerConnection.addTrack(videoTrack, List.of("stream")); 
     }
     
     
@@ -198,8 +188,6 @@ public class WebRtcWrapper {
                 System.out.println("unable to set remote desc");
                 Logger.LogError(s);
             }
-
-
         });
 
 

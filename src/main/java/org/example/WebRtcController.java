@@ -180,28 +180,4 @@ public class WebRtcController implements WebRtcClient {
         System.out.println("new data channel");
         webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel,this,foreignID));
     }
-    
-    
-    @Override
-    public void OnNewBroadcastMessageRequested(String message)
-    {
-        System.out.println("new broadcast message req");
-        ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
-        sendBuffer.put(message.getBytes(StandardCharsets.UTF_8));
-        System.out.println("broadcasting message" + webRtcDataChannelHandlers.size());
-        sendBuffer.flip();
-        webRtcDataChannelHandlers.forEach(handler -> {
-            try {
-                System.out.println("sending on one webrtc data handler " + message);
-                synchronized (object) {
-                    handler.rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer,false));
-                    System.out.println("sent");
-                }
-            } catch (Exception e) {
-                System.out.println("unable to send message");
-            }
-        });
-    } 
-
-    
 }

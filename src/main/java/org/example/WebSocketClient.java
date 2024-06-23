@@ -44,32 +44,30 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
 
     @Override
     public void onMessage(String s) {
-        System.out.println("got message");
-        System.out.println(s);
+        Logger.LogMessage("got new message over websocket: " + s);
         try {
-            
             handleMessage(s);
         }catch (Exception e) {
-
+            Logger.LogError("unable to parse or handle websocket message: " + s);
         }
     }
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        System.out.println("onclose   " + i + " " + s + " " + b);
+        Logger.LogError("websocket connection closed " + i + s + b);
     }
 
     @Override
     public void onError(Exception e) {
-        System.out.println("onerror " + e.getMessage());
-    }
+        Logger.LogError("onerror: " + e.getMessage());
+    }      
     
     private void handleMessage(String message) throws IOException {
         EventData data;
         try {
             data = gson.fromJson(message, EventData.class);
         } catch (JsonSyntaxException e) {
-            System.out.println("json解析错误：" + message);
+            Logger.LogError("unable to parse json: " + message);
             return;
         }
         switch (data.getEventName()) {
@@ -97,26 +95,24 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
                 break;
             
             default:
-                System.out.println("got new method " + data.getEventName());
+                Logger.LogError("got new method " + data.getEventName());
                 break;
         }
 
     }
 
     private void handleDoesRoomExist(String message, EventData data) {
-        System.out.println("room does not exist");
+        Logger.LogMessage("room does not exist");
         Map map = data.getData();
         String res = (String)map.get("res");
         if (res.equals("Y")) {
             
         }
-        
-        
     }
 
     private void handleNewAnswer(String message, EventData data) {
 
-        System.out.println("got new answer");
+        Logger.LogMessage("handle new answer");
         Map map = data.getData();
 
         String sendbackto = (String) map.get("sendbackto");
@@ -139,7 +135,8 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
 
     private void handleNewPersonJoined(String message, EventData data)
     {
-        System.out.println("handlenewpersonjoined");
+        Logger.LogMessage("handlenewpersonjoined");
+        
         Map map = data.getData();
         String userId = (String) map.get("userID");
         
@@ -147,7 +144,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     }
 
     private void handleJoinedRoom(String message, EventData data) {
-        System.out.println("handlejoinroom,");
+        Logger.LogMessage("handlejoinroom,");
         Map map = data.getData();
          int size = (int) Double.parseDouble(String.valueOf(map.get("roomSize")));
         String connections = (String)map.get("connections");
@@ -165,7 +162,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     }
 
     private void handleNewOffer(String message, EventData data) {
-        System.out.println("got new offer");
+        Logger.LogMessage("got new offer");
         Map map = data.getData();
 
         String sendbackto = (String) map.get("sendbackto");
@@ -185,7 +182,7 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
     }
 
     private void handleNewIceClient(String message, EventData data) {
-        System.out.println("handle new ice client");
+        Logger.LogMessage("handle new ice client");
         Map hashMap = data.getData();
         String sdpMid = (String) hashMap.get("sdpMid");
         String sdp = (String) hashMap.get("sdp");
@@ -195,5 +192,4 @@ public class WebSocketClient extends org.java_websocket.client.WebSocketClient {
         String sender = (String) hashMap.get("sender");
         webRtcClient.OnNewForeignIceCandidate(new RTCIceCandidate(sdpMid,sdpMLineIndex,sdp),sender);
     }
-    
 }
