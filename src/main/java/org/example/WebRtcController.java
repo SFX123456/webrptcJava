@@ -35,12 +35,13 @@ public class WebRtcController implements WebRtcClient {
     private static Object object = new Object();
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     private TranscriptionSender transcriptionSender;
+    private AudioPlayer audioPlayer;
     public WebRtcController(int id, String roomName) throws URISyntaxException, IOException {
         myId = id;
         this.roomName = roomName;
         webSocketClient = connectToWebSocketServer();
         messageSender = new MessageSender(webSocketClient);
-        
+        audioPlayer = new AudioPlayer();
     }
     
     
@@ -92,8 +93,7 @@ public class WebRtcController implements WebRtcClient {
     public void OnConnectedToRoom(RoomInfo roomInfo)
     {
        CurrentRoom = roomInfo;
-       System.out.println("connected to room");
-      
+       Logger.LogMessage("connected to room");
     }
 
     @Override
@@ -139,11 +139,7 @@ public class WebRtcController implements WebRtcClient {
     public void OnNewAudio(byte[] audioData, int bitsPerSample, int sampleRate, int channels) {
         if (myId != 5) return;
 
-        try {
-            AudioOutput.GetAudioOutput(bitsPerSample,sampleRate,channels).OnNewAudioData(audioData);
-        } catch (LineUnavailableException e) {
-            Logger.LogError("no output line available");
-        }
+        audioPlayer.onData(audioData,bitsPerSample,sampleRate,channels,0);
     }
 
     @Override

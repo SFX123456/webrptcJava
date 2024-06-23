@@ -28,8 +28,7 @@ public class AudioPlayer implements AudioTrackSink {
             }
         }
 
-        audioLine.write(data, 0, frames * channels * (bitsPerSample / 8));
-        
+        audioLine.write(data, 0, data.length);
     }
 
     public void close() {
