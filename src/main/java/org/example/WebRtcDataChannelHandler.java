@@ -30,14 +30,13 @@ public class WebRtcDataChannelHandler {
         rtcDataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
             public void onBufferedAmountChange(long l) {
-                System.out.println("Buffered Amount changed");
+               Logger.LogMessage("Buffered Amount changed");
             }
 
             @Override
             public void onStateChange() {
 
-                System.out.println("DataChannel state changed");
-                System.out.println(rtcDataChannel.getState());
+               Logger.LogMessage("DataChannel state changed: " + rtcDataChannel.getState());
                 if (!rtcDataChannel.getState().equals(RTCDataChannelState.OPEN)) return;
                 if (webRtcClient.DidSendInitializeMethod(foreignID)) return;
                 //webRtcClient.OnNewBroadcastMessageRequested("Hallo welt");

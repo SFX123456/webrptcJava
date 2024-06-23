@@ -52,25 +52,25 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
     @Override
     public void onIceCandidate(RTCIceCandidate rtcIceCandidate) {
-        System.out.println("got new ice candidate");
+        Logger.LogMessage("got new ice candidate");
         if (rtcIceCandidate == null) return;
         webRtcClient.OnNewOwnIceCandidate(rtcIceCandidate.sdp, rtcIceCandidate.sdpMid, rtcIceCandidate.sdpMLineIndex);
     }
 
     @Override
     public void onTrack(RTCRtpTransceiver transceiver) {
-        System.out.println("client 2: on Track");
+        Logger.LogMessage("client 2: on Track");
         MediaStreamTrack typ = transceiver.getReceiver().getTrack();
         System.out.println(typ.getKind());
         if (typ.getKind().equals(MediaStreamTrack.VIDEO_TRACK_KIND)) {
             videoViewer = new VideoViewer();
-            System.out.println("is videotrackl");
+            Logger.LogMessage("is videotrackl");
             if (webRtcClient.getID() == 5) return;
             VideoTrack videoTrack1 = (VideoTrack) typ;
             typ.addTrackEndedListener(new MediaStreamTrackEndedListener() {
                 @Override
                 public void onTrackEnd(MediaStreamTrack mediaStreamTrack) {
-                    System.out.println("video ended");
+                    Logger.LogError("video ended");
                 }
             });
             
@@ -83,7 +83,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
                 }
             });
         } else {
-            System.out.println("its an audiotrack");
+           Logger.LogMessage("its an audiotrack");
 
             AudioTrack audioTrack = (AudioTrack) typ;
 
@@ -132,30 +132,23 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
 
     @Override
     public void onAddTrack(RTCRtpReceiver receiver, MediaStream[] mediaStreams) {
-        System.out.println("client 2: onaddtrack");
-        System.out.println(mediaStreams.length);
-
+       Logger.LogMessage("client 2: onaddtrack");
     }
 
     @Override
     public void onDataChannel(RTCDataChannel dataChannel) {
-        System.out.println("client b got data channel");
-        System.out.println("never gets called");
+        Logger.LogMessage("client b got data channel");
         webRtcClient.OnNewDataChannel(dataChannel, foreignID);
-
     }
 
     @Override
     public void onSignalingChange(RTCSignalingState state) {
-        System.out.println("Signaling changed");
-        System.out.println(state);
-        System.out.println(state.name());
-
+        Logger.LogMessage("Signaling changed " + state.name());
     }
 
     @Override
     public void onConnectionChange(RTCPeerConnectionState state) {
-        System.out.println("con changed");
+        Logger.LogMessage("con changed");
 
     }
 
@@ -181,8 +174,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     }
 
     public void onIceCandidateError(RTCPeerConnectionIceErrorEvent event) {
-        System.out.println("ice candidate erro");
-        Logger.LogError(event.getErrorText());
+        Logger.LogError("ice candidate error" + event.getErrorText());
     }
 
 }

@@ -26,8 +26,6 @@ public class WebRtcWrapper {
    public HashMap<String, RTCSdpType> stringRTCSdpTypeHashMap = new HashMap<>(); 
    
    public RTCRtpTransceiver rtcRtpTransceiver;
-    public RTCRtpTransceiver videoRtpTransceiver;
-   public WebRtcDataChannelHandler webRtcDataChannelHandler;
    public boolean sentInitializeMethod = false;
    public String userResponsibleFor = null;
     private VideoDeviceSource videoSource;
@@ -140,6 +138,7 @@ public class WebRtcWrapper {
         rtcPeerConnection.addTrack(ownAudio.audioTrack, ownAudio.list);
         rtcRtpTransceiver = rtcPeerConnection.addTransceiver(ownAudio.audioTrack, new RTCRtpTransceiverInit());
         Logger.LogMessage("set audio track");
+        
         videoSource = new VideoDeviceSource();
         VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
         videoSource.setVideoCaptureDevice(device);
@@ -155,38 +154,35 @@ public class WebRtcWrapper {
         rtcPeerConnection.setRemoteDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
             @Override
             public void onSuccess() {
-                System.out.println("client B set remote desc succ");
+                Logger.LogMessage("client B set remote desc succ");
                 rtcPeerConnection.createAnswer(new RTCAnswerOptions(), new CreateSessionDescriptionObserver() {
                     @Override
                     public void onSuccess(RTCSessionDescription rtcSessionDescription) {
-                        System.out.println("anxwered");
 
                         rtcPeerConnection.setLocalDescription(rtcSessionDescription, new SetSessionDescriptionObserver() {
                             @Override
                             public void onSuccess() {
-                                System.out.println("Client B set local desc");
-                                System.out.println("sending message back to " + userID);
+                                Logger.LogMessage("Client B set local desc");
                                 webRtcClient.OnSendAnswer(rtcSessionDescription.sdp, String.valueOf(rtcSessionDescription.sdpType), userID);
                             }
 
                             @Override
                             public void onFailure(String s) {
-                                System.out.println("cliebt b not set local desc");
+                                Logger.LogError("cliebt b not set local desc");
                             }
                         });
                     }
 
                     @Override
                     public void onFailure(String s) {
-                        System.out.println("client b not set remote desc succ");
+                        Logger.LogError("client b not set remote desc succ");
                     }
                 });
             }
 
             @Override
             public void onFailure(String s) {
-                System.out.println("unable to set remote desc");
-                Logger.LogError(s);
+                Logger.LogError("unable to set remote desc" + s);
             }
         });
 
@@ -195,9 +191,8 @@ public class WebRtcWrapper {
     
     public void handleNewIceCandidateForeign(RTCIceCandidate rtcIceCandidate)
     {
-        System.out.println("handleNewIceCandidateForeign");
+        Logger.LogMessage("handleNewIceCandidateForeign");
         rtcPeerConnection.addIceCandidate(rtcIceCandidate);
-        System.out.println("added rtc ice candidate");
     }
     
 }

@@ -38,30 +38,9 @@ public class VideoViewer extends JPanel {
         }
     }
 
-    protected void OnNewVideoFrame(byte[] bytes)
-    {
-        
-        try {
-            bufferedImage = byteArrayToBufferedImage(bytes);
-            repaint();
-        } catch (IOException e) {
-           System.out.println(e.getMessage()); 
-        }
-    }
-
     protected void OnNewVideoFrame2(BufferedImage image)
     {
         bufferedImage = image;
         repaint();
-    }
-
-    public static BufferedImage byteArrayToBufferedImage(byte[] imageBytes) throws IOException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
-        
-        var t = ImageIO.read(bais);
-        
-        bais.close();
-        
-        return t;
     }
 }

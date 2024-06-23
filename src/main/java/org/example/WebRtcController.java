@@ -32,7 +32,6 @@ public class WebRtcController implements WebRtcClient {
     public int myId;
     public ArrayList<WebRtcDataChannelHandler> webRtcDataChannelHandlers = new ArrayList<>();
     public String roomName = "";
-    private static Object object = new Object();
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     private TranscriptionSender transcriptionSender;
     private AudioPlayer audioPlayer;
@@ -57,12 +56,12 @@ public class WebRtcController implements WebRtcClient {
    @Override
    public void OnSomeoneNewJoined(UserBean userBean)
    {
-       System.out.println("on someone new joined");
+       Logger.LogMessage("on someone new joined");
        CurrentRoom.getUserBeans().add(userBean);
        try {
            WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userBean.getUserId(),true);
            UserIdToPeerConnection.put(userBean.getUserId(),webRtcWrapper1);
-           System.out.println("sending offer to " + userBean.getUserId());
+           Logger.LogMessage("sending offer to " + userBean.getUserId());
            webRtcWrapper1.startOfferSending(userBean.getUserId());
        }
        catch (Exception e) {
@@ -84,7 +83,7 @@ public class WebRtcController implements WebRtcClient {
 
     @Override
     public void OnConnectedToServer() throws IOException {
-        System.out.println("Successfully connected to Websocketserver creating lobby");
+        Logger.LogMessage("Successfully connected to Websocketserver creating lobby");
         messageSender.joinRoom(roomName);
     }
     
@@ -98,7 +97,7 @@ public class WebRtcController implements WebRtcClient {
 
     @Override
     public void OnGotOffer(String sdp, String type, String userID ) {
-        System.out.println("received offer from " + userID);
+        Logger.LogMessage("received offer from " + userID);
         try {
             WebRtcWrapper webRtcWrapper1 = new WebRtcWrapper(this, userID,false);
             UserIdToPeerConnection.put(userID,webRtcWrapper1);
@@ -111,7 +110,7 @@ public class WebRtcController implements WebRtcClient {
 
     @Override
     public void OnGotAnswer(String sdp, String type, String userID, String sender) {
-        System.out.println("got answer from " + sender);
+        Logger.LogMessage("got answer from " + sender);
         UserIdToPeerConnection.get(sender).handleNewAccept(sdp,type,userID);
     }
 
@@ -158,17 +157,17 @@ public class WebRtcController implements WebRtcClient {
 
     public void OnNewOwnIceCandidate(String sdp, String sdpMid, int sdpMLineIndex )
     {
-        System.out.println("broadcast message");
+       Logger.LogMessage("broadcast message");
          CopyOnWriteArrayList<UserBean> users = CurrentRoom.getUserBeans();   
          users.forEach(userBean -> {
-             System.out.println("broadcast new ice candidate message to " + userBean.getUserId());
+            Logger.LogMessage("broadcast new ice candidate message to " + userBean.getUserId());
              messageSender.sendNewIceCandidateMessage(sdpMid,sdp, String.valueOf(sdpMLineIndex),userBean.getUserId(), String.valueOf(myId));
          });
     }
 
     @Override
     public void OnSuccessfullyCreatedOffer(String sdp, String type, String id) {
-        System.out.println("succes created offer");
+        Logger.LogMessage("succes created offer");
         if (CurrentRoom == null) return;
       
         messageSender.sendNewOffer(sdp,type,id);
@@ -177,7 +176,7 @@ public class WebRtcController implements WebRtcClient {
     @Override
     public void OnNewDataChannel(RTCDataChannel rtcDataChannel, String foreignID)
     {
-        System.out.println("new data channel");
+        Logger.LogMessage("new data channel");
         webRtcDataChannelHandlers.add( new WebRtcDataChannelHandler(rtcDataChannel,this,foreignID));
     }
 }
