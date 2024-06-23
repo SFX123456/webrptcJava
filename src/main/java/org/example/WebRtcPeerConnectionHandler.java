@@ -33,8 +33,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     public WebRtcClient webRtcClient;
     private String foreignID = null;
     private VideoViewer videoViewer;
-    private boolean first = true;
-    private ImageView imageView;
+   
     private ArrayList<VideoFrameBuffer> videoFrames;
 
     public WebRtcPeerConnectionHandler(WebRtcClient webRtcClient, String foreignID) {
@@ -44,17 +43,14 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
     }
 
     private AudioPlayer audioPlayer;
-    private boolean sendInitialMessage = false;
-
+ 
     private PixelBuffer<ByteBuffer> pixelBuffer;
 
     private ByteBuffer byteBuffer;
-    private Integer integ = 0;
-    private static Object lock = new Object();
+ 
     private Integer lastHeight = null;
     private Integer lastWidth = null;
     private int[] argPixel;
-    private ByteArrayOutputStream byteArrayOutputStream;
     private BufferedImage bufferedImage;
     private int[] pixels;
     private DataBufferInt bufferInt;
@@ -64,9 +60,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         System.out.println("got new ice candidate");
         if (rtcIceCandidate == null) return;
         webRtcClient.OnNewOwnIceCandidate(rtcIceCandidate.sdp, rtcIceCandidate.sdpMid, rtcIceCandidate.sdpMLineIndex);
-
     }
-
 
     @Override
     public void onTrack(RTCRtpTransceiver transceiver) {
@@ -84,8 +78,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
                     System.out.println("video ended");
                 }
             });
-
-
+            
             videoTrack1.addSink(new VideoTrackSink() {
                 @Override
                 public void onVideoFrame(VideoFrame videoFrame) {
@@ -103,8 +96,7 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             
         }
     }
-
-
+    
     private CompletableFuture<Boolean> dealWithFrame(VideoFrameBuffer buffer) {
         int width = buffer.getWidth();
         int height = buffer.getHeight();
@@ -113,20 +105,17 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
             lastHeight = height;
             byteBuffer = ByteBuffer.wrap(new byte[width * height * 4]);
             argPixel = new int[width * height];
-            byteArrayOutputStream = new ByteArrayOutputStream();
             bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             bufferInt = (DataBufferInt) bufferedImage.getRaster().getDataBuffer();
             pixels = bufferInt.getData();
         }
-
-
+        
         try {
             VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
+        
         for (int i = 0; i < argPixel.length; i++) {
             int b = byteBuffer.get(i * 4) & 0xFF;
             int g = byteBuffer.get(i * 4 + 1) & 0xFF;
@@ -138,44 +127,12 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         System.arraycopy(argPixel, 0, pixels, 0, argPixel.length);
 
         try {
-            // Reset the ByteArrayOutputStream for reuse
-            //byteArrayOutputStream.reset();
-
-            // Write BufferedImage to ByteArrayOutputStream as PNG
-            //ImageIO.write(bufferedImage, "png", byteArrayOutputStream);
-            //byte[] imageBytes = byteArrayOutputStream.toByteArray();
-
-            // Pass the byte array to the video viewer
             videoViewer.OnNewVideoFrame2(bufferedImage);
-
-            // Optionally flush the stream (though reset() clears it)
-            //byteArrayOutputStream.flush();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
-
+        
         return CompletableFuture.supplyAsync(() -> true);
-
-
-    }
-
-    private static int[] byteArrayToIntArray(byte[] bytes) {
-        int[] result = new int[bytes.length / 4];
-        for (int i = 0; i < result.length; i++) {
-            int b0 = bytes[i * 4] & 0xFF;
-            int b1 = bytes[i * 4 + 1] & 0xFF;
-            int b2 = bytes[i * 4 + 2] & 0xFF;
-            int b3 = bytes[i * 4 + 3] & 0xFF;
-            result[i] = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
-        }
-        return result;
-    }
-
-    private static int clamp(int value) {
-        return Math.min(Math.max(value, 0), 255);
     }
 
     @Override
