@@ -25,39 +25,24 @@ import java.util.List;
 public class TranscriptionSender {
     private RTCDataChannel rtcDataChannel;
     private TranscriptionViewer transcriptionViewer;
-    private Object lock;
-    private WhisperContext ctx ;
-    private WhisperFullParams params ;
-    private WhisperJNI whisperJNI;
-    private DataLine.Info dataLineInfo;
-    private final static int SAMPLESARRAYSIZE = 1000000;
-    private final static int SIZEBYTESSAMPLE = 2;
-    private final static int SIZESAMPLES = 16000 * 10;
-    private final static long TIMECYCLEAUDIOPROCESSING = 30000;
+
     private String totalRecorded;
-    public TranscriptionSender(RTCDataChannel rtcDataChannel, Object lock) throws IOException {
+
+    public TranscriptionSender(RTCDataChannel rtcDataChannel)  {
         this.rtcDataChannel = rtcDataChannel;
         this.transcriptionViewer = new TranscriptionViewer();
-        this.lock = lock;
         totalRecorded = "";
     }
 
     public void sendMessages() {
-       /* 
         Thread t = new Thread(() -> {
-            try 
-            {
+            try {
                 runLoop();
-            } catch (Exception e) 
-            {
+            } catch (Exception e) {
                 Logger.LogMessage("Transcription Error: " + e.getMessage());
             }
         });
         t.start();
-        
-        
-        */
-         
     }
 
     private void runLoop() throws Exception {
@@ -78,28 +63,23 @@ public class TranscriptionSender {
         readErrorStream(new InputStreamReader(process.getErrorStream()));
         readTransText(new InputStreamReader(process.getInputStream()));
     }
-    
-    private void readErrorStream(InputStreamReader inputStreamReader)
-    {
-        Thread c = new Thread(() -> {
+
+    private void readErrorStream(InputStreamReader inputStreamReader) {
+        new Thread(() -> {
             BufferedReader reader = new BufferedReader(inputStreamReader);
-            String line;
+            String line = "";
             while (true) {
                 try {
                     if (!((line = reader.readLine()) != null)) break;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    Logger.LogError("Transcription error: " + line);
                 }
-                Logger.LogError("Transcription error: " + line);
-            } 
-        });
-        
-        c.start();
+            }
+        }).start();
     }
 
-    private void readTransText(InputStreamReader inputStreamReader)
-    {
-        Thread c = new Thread(() -> {
+    private void readTransText(InputStreamReader inputStreamReader) {
+        new Thread(() -> {
             BufferedReader reader = new BufferedReader(inputStreamReader);
             String line;
             while (true) {
@@ -108,27 +88,24 @@ public class TranscriptionSender {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                Logger.LogMessage("new transcriped text " +line);
                 totalRecorded += line;
                 try {
-                    synchronized (lock) {
-                        sendMessage(totalRecorded.getBytes(StandardCharsets.UTF_8));
-                    }
+
+                    sendMessage(totalRecorded.getBytes(StandardCharsets.UTF_8));
+                    transcriptionViewer.OnNewText(totalRecorded);
+                    
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
-        });
-
-        c.start();
+        }).start();
     }
-    
+
     public void sendMessage(byte[] bytes) throws Exception {
         ByteBuffer sendBuffer = ByteBuffer.allocate(bytes.length);
         sendBuffer.put(bytes);
-        rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer,false));
+        rtcDataChannel.send(new RTCDataChannelBuffer(sendBuffer, false));
     }
 
- 
-    
+
 }

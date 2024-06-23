@@ -15,15 +15,14 @@ public class WebRtcDataChannelHandler {
     public RTCDataChannel rtcDataChannel;
     private WebRtcClient webRtcClient;
     private String foreignID;
-    private VideoViewer videoViewer;
+    private TranscriptionViewer transcriptionViewer;
     private final Object lock = new Object();
-    private BufferedImage bufferedImage;
-
+    
     public WebRtcDataChannelHandler(RTCDataChannel rtcDataChannel, WebRtcClient webRtcClient, String foreignID) {
         this.foreignID = foreignID;
         this.rtcDataChannel = rtcDataChannel;
         this.webRtcClient = webRtcClient;
-
+        this.transcriptionViewer = new TranscriptionViewer();
         registerListener();
     }
 
@@ -53,46 +52,16 @@ public class WebRtcDataChannelHandler {
 
             @Override
             public void onMessage(RTCDataChannelBuffer rtcDataChannelBuffer) {
-                System.out.println("onMessage new messafe received");
                 ByteBuffer buffer = rtcDataChannelBuffer.data;
-
-                System.out.println("New message received");
-                System.out.println("Position: " + buffer.position());
-                System.out.println("Limit: " + buffer.limit());
-                System.out.println("Capacity: " + buffer.capacity());
-                Logger.LogMessage("remaining : " + buffer.remaining());
-
+             
                 if (!buffer.hasRemaining()) return;
+                
                 byte[] bytes = new byte[buffer.remaining()];
                 buffer.get(bytes);
-
-                if (isJPEG(bytes)) {
-                    //videoViewer.OnNewImage(bytes);
-                  
-                    Logger.LogMessage("it is an jpeg");
-                    buffer.clear();
-                    return;
-                }
-                Logger.LogMessage("is is not an jpeg");
-                //handle simple message
-                Logger.LogMessage(rtcDataChannel.getLabel());
+                
                 String receivedMessage = new String(bytes, StandardCharsets.UTF_8);
-                System.out.println("Received message: " + receivedMessage);
-
-
+               transcriptionViewer.OnNewText(receivedMessage);
             }
         });
-    }
-
-    public static boolean isJPEG(byte[] bytes) {
-        if (bytes.length < 4) {
-            return false;
-        }
-
-        // Check the JPEG signature
-        return (bytes[0] & 0xFF) == 0xFF &&
-                (bytes[1] & 0xFF) == 0xD8 &&
-                (bytes[2] & 0xFF) == 0xFF &&
-                ((bytes[3] & 0xFF) == 0xE0 || (bytes[3] & 0xFF) == 0xE1);
     }
 }

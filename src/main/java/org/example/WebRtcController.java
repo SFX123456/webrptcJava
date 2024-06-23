@@ -31,10 +31,8 @@ public class WebRtcController implements WebRtcClient {
     private RoomInfo CurrentRoom = null;
     public int myId;
     public ArrayList<WebRtcDataChannelHandler> webRtcDataChannelHandlers = new ArrayList<>();
-    final public int MAXROOMSIZE = 5;
     public String roomName = "";
     private static Object object = new Object();
-    private VideoSender videoSender;
     public HashMap<String,WebRtcWrapper> UserIdToPeerConnection = new HashMap<>();
     private TranscriptionSender transcriptionSender;
     public WebRtcController(int id, String roomName) throws URISyntaxException, IOException {
@@ -43,12 +41,6 @@ public class WebRtcController implements WebRtcClient {
         webSocketClient = connectToWebSocketServer();
         messageSender = new MessageSender(webSocketClient);
         
-        try {
-            //setUpAudio();
-        }
-        catch (Exception e) {
-            System.out.println("Unable to identify audio output");
-        }
     }
     
     
@@ -143,18 +135,6 @@ public class WebRtcController implements WebRtcClient {
     public void OnNewForeignIceCandidate(RTCIceCandidate rtcIceCandidate, String sender) {
        UserIdToPeerConnection.get(sender).handleNewIceCandidateForeign(rtcIceCandidate);
     }
-    
-    
-    private void setUpAudio() throws LineUnavailableException {
-        
-        AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
-        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-        line = (SourceDataLine) AudioSystem.getLine(info);
-        line.open(format);
-        line.start();
-       
-         
-    }
 
     public void OnNewAudio(byte[] audioData, int bitsPerSample, int sampleRate, int channels) {
         if (myId != 5) return;
@@ -172,7 +152,7 @@ public class WebRtcController implements WebRtcClient {
         if (myId != 5) return;
         try {
             rtcDataChannel.send(new RTCDataChannelBuffer(ByteBuffer.wrap("hallo".getBytes(StandardCharsets.UTF_8)),false));
-            transcriptionSender = new TranscriptionSender(rtcDataChannel,lock);
+            transcriptionSender = new TranscriptionSender(rtcDataChannel);
             transcriptionSender.sendMessages();
         }
         catch (Exception e) {
@@ -225,7 +205,7 @@ public class WebRtcController implements WebRtcClient {
                 System.out.println("unable to send message");
             }
         });
-    }
+    } 
 
     
 }
