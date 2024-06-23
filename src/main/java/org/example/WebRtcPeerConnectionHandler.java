@@ -97,24 +97,10 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         } else {
             System.out.println("its an audiotrack");
 
-            AudioTrack audioTrack1 = (AudioTrack) typ;
+            AudioTrack audioTrack = (AudioTrack) typ;
 
-            audioTrack1.addSink(new AudioTrackSink() {
-                
-                @Override
-                public void onData(byte[] data, int bitsPerSample, int sampleRate, int channels, int frames) {
-                    
-                    System.out.println("got audio data");
-                    System.out.println(bitsPerSample);
-                    System.out.println(sampleRate);
-                    System.out.println(channels);
-                    System.out.println(frames);
-                    System.out.println(data.length);
-                    webRtcClient.OnNewAudio(data, bitsPerSample,sampleRate,channels);
-                }
-            });
-
-
+            audioTrack.addSink(new org.example.AudioPlayer());
+            
         }
     }
 
