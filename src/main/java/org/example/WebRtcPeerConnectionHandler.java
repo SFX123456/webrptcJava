@@ -41,11 +41,6 @@ public class WebRtcPeerConnectionHandler implements PeerConnectionObserver {
         this.webRtcClient = webRtcClient;
         videoFrames = new ArrayList<>();
     }
-
-    private AudioPlayer audioPlayer;
- 
-    private PixelBuffer<ByteBuffer> pixelBuffer;
-
     private ByteBuffer byteBuffer;
  
     private Integer lastHeight = null;
