@@ -140,12 +140,38 @@ public class WebRtcWrapper {
         Logger.LogMessage("set audio track");
         
         videoSource = new VideoDeviceSource();
-        VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
-        videoSource.setVideoCaptureDevice(device);
-        videoSource.setVideoCaptureCapability(MediaDevices.getVideoCaptureCapabilities(device).get(0)); //I believe index 0 is auto-resolution, 17 is 1280x720 @ 10fps
-        videoSource.start();
-        videoTrack = peerConnectionFactory.createVideoTrack("CAM", videoSource);
-        rtcPeerConnection.addTrack(videoTrack, List.of("stream")); 
+        Logger.LogMessage("test1");
+        if(MediaDevices.getVideoCaptureDevices().size() == 0) {
+            Logger.LogError("no video capture device");
+        }
+        for (VideoDevice captureDevice : MediaDevices.getVideoCaptureDevices()) {
+            System.out.println(captureDevice);
+        }
+        Logger.LogMessage("test2");
+        try {
+
+            VideoDevice device = MediaDevices.getVideoCaptureDevices().get(0);
+
+            Logger.LogMessage("test3");
+            videoSource.setVideoCaptureDevice(device);
+
+            Logger.LogMessage("test4");
+            videoSource.setVideoCaptureCapability(MediaDevices.getVideoCaptureCapabilities(device).get(0)); //I believe index 0 is auto-resolution, 17 is 1280x720 @ 10fps
+
+            Logger.LogMessage("test5");
+            videoSource.start();
+
+            Logger.LogMessage("test6");
+            videoTrack = peerConnectionFactory.createVideoTrack("CAM", videoSource);
+
+            Logger.LogMessage("test7");
+            rtcPeerConnection.addTrack(videoTrack, List.of("stream"));
+
+            Logger.LogMessage("test8");
+        }
+        catch (Exception e) {
+            Logger.LogError("unable to get video capture device");
+        }
     }
     
     
